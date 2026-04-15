@@ -21,6 +21,8 @@ import {
   getBuildingBulkCost,
 } from '../engine/gameLoop';
 import { checkAchievements, applyAchievements } from '../engine/achievementEngine';
+import { checkMilestones } from '../engine/milestoneEngine';
+import { MilestoneEvent } from '../components/hud/MilestoneToast';
 import { saveLocal, loadLocal, syncToCloud } from '../engine/saveManager';
 import { achievements as defaultAchievements } from '../config/gameConfig';
 
@@ -82,7 +84,10 @@ export function useGameEngine({
   const [loaded, setLoaded] = useState(false);
   const [pendingOfflineEarnings, setPendingOfflineEarnings] = useState<OfflineEarnings | null>(null);
   const [pendingAchievement, setPendingAchievement] = useState<AchievementDef | null>(null);
+  const [pendingMilestone, setPendingMilestone] = useState<MilestoneEvent | null>(null);
   const achievementQueue = useRef<AchievementDef[]>([]);
+  const milestoneQueue = useRef<MilestoneEvent[]>([]);
+  const firedMilestones = useRef<Set<string>>(new Set());
 
   const [state, dispatch] = useReducer(
     reducer(config, defaultAchievements),
@@ -97,6 +102,13 @@ export function useGameEngine({
     const prev = prevStateRef.current;
     const curr = state;
     prevStateRef.current = curr;
+
+    // Check milestones
+    const newMilestones = checkMilestones(config, curr, prev, firedMilestones.current);
+    for (const m of newMilestones) milestoneQueue.current.push(m);
+    if (!pendingMilestone && milestoneQueue.current.length > 0) {
+      setPendingMilestone(milestoneQueue.current.shift()!);
+    }
 
     // Find achievements unlocked in this state that weren't before
     for (const a of defaultAchievements) {
@@ -199,6 +211,15 @@ export function useGameEngine({
     (id: string) => dispatch({ type: 'BUY_PRESTIGE_UPGRADE', upgradeId: id }), []
   );
   const prestige = useCallback(() => dispatch({ type: 'PRESTIGE' }), []);
+  const dismissMilestone = useCallback(() => {
+    setPendingMilestone(null);
+    setTimeout(() => {
+      if (milestoneQueue.current.length > 0) {
+        setPendingMilestone(milestoneQueue.current.shift()!);
+      }
+    }, 400);
+  }, []);
+
   const dismissOfflineEarnings = useCallback(() => setPendingOfflineEarnings(null), []);
   const dismissAchievement = useCallback(() => {
     setPendingAchievement(null);
@@ -231,6 +252,8 @@ export function useGameEngine({
     dismissOfflineEarnings,
     pendingAchievement,
     dismissAchievement,
+    pendingMilestone,
+    dismissMilestone,
     tap,
     purchaseBuilding,
     purchaseBuildingBulk,

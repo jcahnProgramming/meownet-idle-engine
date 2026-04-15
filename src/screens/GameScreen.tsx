@@ -22,6 +22,7 @@ import { HUD } from '../components/hud/HUD';
 import { TapTarget } from '../components/hud/TapTarget';
 import { OfflineEarningsModal } from '../components/hud/OfflineEarningsModal';
 import { AchievementToast } from '../components/hud/AchievementToast';
+import { MilestoneToast } from '../components/hud/MilestoneToast';
 import { BuyModeToggle, BuyMode } from '../components/buildings/BuyModeToggle';
 
 type EngineType = ReturnType<typeof useGameEngine>;
@@ -50,6 +51,8 @@ export default function GameScreen({ userId, config: configProp, engine: engineP
     dismissOfflineEarnings,
     pendingAchievement,
     dismissAchievement,
+    pendingMilestone,
+    dismissMilestone,
     tap,
     purchaseBuilding,
     purchaseBuildingBulk,
@@ -79,6 +82,10 @@ export default function GameScreen({ userId, config: configProp, engine: engineP
       <AchievementToast
         achievement={pendingAchievement}
         onDismiss={dismissAchievement}
+      />
+      <MilestoneToast
+        event={pendingMilestone}
+        onDismiss={dismissMilestone}
       />
 
       {/* ── HUD ── */}
