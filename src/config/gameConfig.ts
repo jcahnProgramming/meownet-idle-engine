@@ -132,8 +132,10 @@ export const gameConfig: GameConfig = {
   },
 
   // ── Achievements ────────────────────────────
-  // Populated from the achievements export below — keeps config DRY
   achievements: [],
+
+  // ── Prestige Shop ───────────────────────────
+  prestigeShop: [],
 };
 
 // Patch: add achievements and tapCount to the config
@@ -203,5 +205,45 @@ export const achievements: AchievementDef[] = [
     description: 'Prestige for the first time.',
     icon: '✨',
     trigger: { type: 'prestige_count', count: 1 },
+  },
+];
+import { PrestigeUpgradeDef } from '../types/engine';
+
+export const prestigeShopItems: PrestigeUpgradeDef[] = [
+  {
+    id: 'prestige_global_x2',
+    name: 'Sugar Rush',
+    description: 'All production ×2 permanently.',
+    icon: '⚡',
+    cost: 5,
+    maxLevel: 5,
+    effect: { type: 'global_multiplier', value: 2 },
+  },
+  {
+    id: 'prestige_offline_boost',
+    name: 'Night Shift',
+    description: 'Offline earnings rate +10% per level.',
+    icon: '🌙',
+    cost: 3,
+    maxLevel: 5,
+    effect: { type: 'offline_rate', value: 0.1 },
+  },
+  {
+    id: 'prestige_tap_power',
+    name: 'Golden Paws',
+    description: 'Tap power ×3 permanently.',
+    icon: '🐾',
+    cost: 4,
+    maxLevel: 3,
+    effect: { type: 'tap_multiplier', value: 3 },
+  },
+  {
+    id: 'prestige_head_start',
+    name: 'Head Start',
+    description: 'Start each run with 50 free cookies.',
+    icon: '🎁',
+    cost: 2,
+    maxLevel: 5,
+    effect: { type: 'start_resources', value: 50 },
   },
 ];

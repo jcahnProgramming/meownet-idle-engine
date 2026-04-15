@@ -91,6 +91,7 @@ export interface GameConfig {
   upgrades: UpgradeDef[];
   prestige: PrestigeConfig;
   achievements: AchievementDef[];
+  prestigeShop: PrestigeUpgradeDef[];
   theme: ThemeConfig;
   balance: BalanceConfig;
   remote: RemoteConfig;
@@ -121,8 +122,9 @@ export interface GameState {
   upgrades: UpgradeState;
   prestige: PrestigeState;
   achievements: AchievementState;
+  prestigeShop: PrestigeShopState;
   tapCount: number;
-  lastSaveAt: number;     // unix ms
+  lastSaveAt: number;
   lastTickAt: number;
   totalPlaytimeMs: number;
 }
@@ -148,4 +150,22 @@ export interface AchievementState {
   [achievementId: string]: {
     unlockedAt: number; // unix ms
   };
+}
+
+// ─── Prestige Shop ────────────────────────────
+export interface PrestigeUpgradeDef {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  cost: number;             // prestige currency cost
+  maxLevel: number;         // how many times purchasable (1 = one-time)
+  effect: {
+    type: 'global_multiplier' | 'offline_rate' | 'tap_multiplier' | 'start_resources';
+    value: number;          // multiplier per level or flat bonus
+  };
+}
+
+export interface PrestigeShopState {
+  [upgradeId: string]: number; // level purchased
 }

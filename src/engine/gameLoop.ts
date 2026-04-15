@@ -36,6 +36,10 @@ export function calculateProductionRates(
       }
     }
 
+    // Apply prestige shop global multiplier
+    const prestigeMults = getPrestigeMultipliers(config, state);
+    multiplier = multiply(multiplier, prestigeMults.globalMultiplier);
+
     for (const [resourceId, baseRate] of Object.entries(building.baseProduction)) {
       const contribution = multiply(multiply(baseRate, count), multiplier);
       rates[resourceId] = add(rates[resourceId] ?? 0, contribution);
@@ -223,11 +227,18 @@ export function applyPrestige(config: GameConfig, state: GameState): GameState {
     freshResources[r.id] = r.startingValue;
   }
 
+  // Apply prestige shop start resource bonuses
+  const mults = getPrestigeMultipliers(config, state);
+  for (const [resourceId, bonus] of Object.entries(mults.startResources)) {
+    freshResources[resourceId] = add(freshResources[resourceId] ?? 0, bonus);
+  }
+
   return {
     resources: freshResources,
     buildings: {},
     upgrades: newUpgrades,
     achievements: state.achievements,
+    prestigeShop: state.prestigeShop,
     tapCount: state.tapCount ?? 0,
     prestige: {
       currency: add(state.prestige.currency, currency),
@@ -251,6 +262,7 @@ export function createDefaultState(config: GameConfig): GameState {
     buildings: {},
     upgrades: {},
     achievements: {},
+    prestigeShop: {},
     tapCount: 0,
     prestige: { currency: 0, totalPrestiges: 0, lifetimeEarnings: {} },
     lastSaveAt: Date.now(),
@@ -320,4 +332,74 @@ export function getBuildingBulkCost(
   }
 
   return result;
+}
+
+// ── Prestige shop ───────────────────────────
+export function buyPrestigeUpgrade(
+  config: GameConfig,
+  state: GameState,
+  upgradeId: string
+): GameState | null {
+  const upgrade = config.prestigeShop.find(u => u.id === upgradeId);
+  if (!upgrade) return null;
+
+  const currentLevel = state.prestigeShop[upgradeId] ?? 0;
+  if (currentLevel >= upgrade.maxLevel) return null;
+
+  if (state.prestige.currency < upgrade.cost) return null;
+
+  return {
+    ...state,
+    prestige: {
+      ...state.prestige,
+      currency: add(state.prestige.currency, -upgrade.cost),
+    },
+    prestigeShop: {
+      ...state.prestigeShop,
+      [upgradeId]: currentLevel + 1,
+    },
+  };
+}
+
+export function getPrestigeMultipliers(config: GameConfig, state: GameState): {
+  globalMultiplier: number;
+  offlineRate: number;
+  tapMultiplier: number;
+  startResources: Record<string, number>;
+} {
+  let globalMultiplier = 1;
+  let offlineRateBonus = 0;
+  let tapMultiplier = 1;
+  const startResources: Record<string, number> = {};
+
+  for (const upgrade of config.prestigeShop) {
+    const level = state.prestigeShop[upgrade.id] ?? 0;
+    if (level === 0) continue;
+
+    switch (upgrade.effect.type) {
+      case 'global_multiplier':
+        globalMultiplier = multiply(globalMultiplier, pow(upgrade.effect.value, level));
+        break;
+      case 'offline_rate':
+        offlineRateBonus += upgrade.effect.value * level;
+        break;
+      case 'tap_multiplier':
+        tapMultiplier = multiply(tapMultiplier, pow(upgrade.effect.value, level));
+        break;
+      case 'start_resources':
+        if (config.resources[0]) {
+          startResources[config.resources[0].id] =
+            (startResources[config.resources[0].id] ?? 0) +
+            upgrade.effect.value * level;
+        }
+        break;
+    }
+  }
+
+  return {
+    globalMultiplier,
+    offlineRate: Math.min(1, config.balance.offlineEarningsRate + offlineRateBonus),
+    tapMultiplier,
+    startResources,
+  };
 }

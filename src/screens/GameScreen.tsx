@@ -24,11 +24,22 @@ import { OfflineEarningsModal } from '../components/hud/OfflineEarningsModal';
 import { AchievementToast } from '../components/hud/AchievementToast';
 import { BuyModeToggle, BuyMode } from '../components/buildings/BuyModeToggle';
 
-interface Props { userId?: string; config?: GameConfig }
+type EngineType = ReturnType<typeof useGameEngine>;
 
-export default function GameScreen({ userId, config: configProp }: Props) {
+interface Props {
+  userId?: string;
+  config?: GameConfig;
+  engine?: EngineType;
+}
+
+export default function GameScreen({ userId, config: configProp, engine: engineProp }: Props) {
   const gameConfig = configProp ?? defaultConfig;
   const theme = gameConfig.theme;
+  const ownEngine = useGameEngine(
+    engineProp ? { config: gameConfig, userId: undefined } : { config: gameConfig, userId }
+  );
+  const engine = engineProp ?? ownEngine;
+
   const {
     state,
     productionRates,
@@ -44,7 +55,7 @@ export default function GameScreen({ userId, config: configProp }: Props) {
     purchaseBuildingBulk,
     purchaseUpgrade,
     prestige,
-  } = useGameEngine({ config: gameConfig, userId });
+  } = engine;
 
   const [activeTab, setActiveTab] = useState<'buildings' | 'upgrades'>('buildings');
   const [buyMode, setBuyMode] = useState<BuyMode>(1);

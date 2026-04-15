@@ -12,6 +12,7 @@ import {
   buyBuilding,
   buyBuildingBulk,
   buyUpgrade,
+  buyPrestigeUpgrade,
   applyPrestige,
   canPrestige,
   createDefaultState,
@@ -35,6 +36,7 @@ type Action =
   | { type: 'BUY_BUILDING'; buildingId: string }
   | { type: 'BUY_BUILDING_BULK'; buildingId: string; count: number | 'max' }
   | { type: 'BUY_UPGRADE'; upgradeId: string }
+  | { type: 'BUY_PRESTIGE_UPGRADE'; upgradeId: string }
   | { type: 'PRESTIGE' };
 
 function reducer(config: GameConfig, achievements: AchievementDef[]) {
@@ -47,6 +49,7 @@ function reducer(config: GameConfig, achievements: AchievementDef[]) {
       case 'BUY_BUILDING': next = buyBuilding(config, state, action.buildingId) ?? state; break;
       case 'BUY_BUILDING_BULK': next = buyBuildingBulk(config, state, action.buildingId, action.count) ?? state; break;
       case 'BUY_UPGRADE': next = buyUpgrade(config, state, action.upgradeId) ?? state; break;
+      case 'BUY_PRESTIGE_UPGRADE': next = buyPrestigeUpgrade(config, state, action.upgradeId) ?? state; break;
       case 'PRESTIGE': next = canPrestige(config, state) ? applyPrestige(config, state) : state; break;
       default: return state;
     }
@@ -118,6 +121,7 @@ export function useGameEngine({
         const migrated = {
           ...saved,
           achievements: saved.achievements ?? {},
+          prestigeShop: saved.prestigeShop ?? {},
           tapCount: saved.tapCount ?? 0,
         };
         const before = migrated.resources;
@@ -164,6 +168,7 @@ export function useGameEngine({
             const migrated = {
               ...saved,
               achievements: saved.achievements ?? {},
+              prestigeShop: saved.prestigeShop ?? {},
               tapCount: saved.tapCount ?? 0,
             };
             const before = migrated.resources;
@@ -189,6 +194,9 @@ export function useGameEngine({
   );
   const purchaseUpgrade = useCallback(
     (id: string) => dispatch({ type: 'BUY_UPGRADE', upgradeId: id }), []
+  );
+  const purchasePrestigeUpgrade = useCallback(
+    (id: string) => dispatch({ type: 'BUY_PRESTIGE_UPGRADE', upgradeId: id }), []
   );
   const prestige = useCallback(() => dispatch({ type: 'PRESTIGE' }), []);
   const dismissOfflineEarnings = useCallback(() => setPendingOfflineEarnings(null), []);
@@ -227,6 +235,7 @@ export function useGameEngine({
     purchaseBuilding,
     purchaseBuildingBulk,
     purchaseUpgrade,
+    purchasePrestigeUpgrade,
     prestige,
   };
 }
