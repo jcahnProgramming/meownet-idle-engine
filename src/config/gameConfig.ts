@@ -123,6 +123,22 @@ export const gameConfig: GameConfig = {
     tapProductionMultiplier: 1,
   },
 
+  // ── Sound ──────────────────────────────────
+  sound: {
+    enabled: true,
+    volume: 0.6,
+    sounds: {
+      // Using web-safe base64 data URIs for built-in sounds so no assets needed.
+      // Forks can replace these with require('./assets/sounds/tap.mp3') paths.
+      tap: 'builtin:tap',
+      purchase: 'builtin:purchase',
+      upgrade: 'builtin:upgrade',
+      achievement: 'builtin:achievement',
+      prestige: 'builtin:prestige',
+      milestone: 'builtin:milestone',
+    },
+  },
+
   // ── Remote (Supabase hosted) ────────────────
   // Replace with your hosted Supabase project values from supabase.com
   remote: {

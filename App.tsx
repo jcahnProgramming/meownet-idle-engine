@@ -10,6 +10,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 
 import { useAuth } from './src/hooks/useAuth';
 import { useGameEngine } from './src/hooks/useGameEngine';
+import { useSoundEngine } from './src/hooks/useSoundEngine';
 import AuthScreen from './src/screens/AuthScreen';
 import GameScreen from './src/screens/GameScreen';
 import LeaderboardScreen from './src/screens/LeaderboardScreen';
@@ -17,7 +18,6 @@ import PrestigeShopScreen from './src/screens/PrestigeShopScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 import { gameConfig as defaultGameConfig } from './src/config/gameConfig';
 import { GameConfig } from './src/types/engine';
-import { createDefaultState } from './src/engine/gameLoop';
 import { loadRemoteConfig } from './src/engine/remoteConfig';
 
 const Tab = createBottomTabNavigator();
@@ -26,10 +26,19 @@ function TabIcon({ icon, focused }: { icon: string; focused: boolean }) {
   return <Text style={{ fontSize: 22, opacity: focused ? 1 : 0.45 }}>{icon}</Text>;
 }
 
-// Single engine instance shared across all tabs
 function MainTabs({ userId, config }: { userId?: string; config: GameConfig }) {
   const theme = config.theme;
   const engine = useGameEngine({ config, userId });
+  const sound = useSoundEngine(config);
+
+  // Wire sound to engine events
+  useEffect(() => {
+    if (engine.pendingAchievement) sound.play('achievement');
+  }, [engine.pendingAchievement?.id]);
+
+  useEffect(() => {
+    if (engine.pendingMilestone) sound.play('milestone');
+  }, [engine.pendingMilestone?.id]);
 
   return (
     <Tab.Navigator
@@ -51,7 +60,7 @@ function MainTabs({ userId, config }: { userId?: string; config: GameConfig }) {
         name="Game"
         options={{ tabBarIcon: ({ focused }) => <TabIcon icon={config.resources[0]?.icon ?? '🎮'} focused={focused} /> }}
       >
-        {() => <GameScreen engine={engine} config={config} />}
+        {() => <GameScreen engine={engine} config={config} sound={sound} />}
       </Tab.Screen>
 
       <Tab.Screen
@@ -62,7 +71,10 @@ function MainTabs({ userId, config }: { userId?: string; config: GameConfig }) {
           <PrestigeShopScreen
             config={config}
             state={engine.state}
-            onBuy={engine.purchasePrestigeUpgrade}
+            onBuy={(id) => {
+              engine.purchasePrestigeUpgrade(id);
+              sound.play('upgrade');
+            }}
           />
         )}
       </Tab.Screen>
@@ -82,7 +94,9 @@ function MainTabs({ userId, config }: { userId?: string; config: GameConfig }) {
           <SettingsScreen
             config={config}
             state={engine.state}
-            onReset={() => {}} // reset handled inside settings via clearLocal + reload
+            muted={sound.muted}
+            onToggleMute={sound.toggleMute}
+            onReset={() => {}}
           />
         )}
       </Tab.Screen>

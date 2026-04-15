@@ -21,10 +21,12 @@ import { formatNumber } from '../engine/gameLoop';
 interface Props {
   config?: GameConfig;
   state: GameState;
+  muted?: boolean;
+  onToggleMute?: () => void;
   onReset: () => void;
 }
 
-export default function SettingsScreen({ config: configProp, state, onReset }: Props) {
+export default function SettingsScreen({ config: configProp, state, muted, onToggleMute, onReset }: Props) {
   const gameConfig = configProp ?? defaultConfig;
   const theme = gameConfig.theme;
   const { user, username, signOut } = useAuth();
@@ -76,6 +78,12 @@ export default function SettingsScreen({ config: configProp, state, onReset }: P
             <Text style={styles.rowLabel}>Save sync</Text>
             <Text style={styles.rowValue}>{user?.email ? '☁️ Cloud' : '📱 Local only'}</Text>
           </View>
+          {onToggleMute && (
+            <TouchableOpacity style={styles.row} onPress={onToggleMute}>
+              <Text style={styles.rowLabel}>Sound</Text>
+              <Text style={styles.rowValue}>{muted ? '🔇 Muted' : '🔊 On'}</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* Stats */}

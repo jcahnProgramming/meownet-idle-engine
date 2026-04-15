@@ -25,15 +25,19 @@ import { AchievementToast } from '../components/hud/AchievementToast';
 import { MilestoneToast } from '../components/hud/MilestoneToast';
 import { BuyModeToggle, BuyMode } from '../components/buildings/BuyModeToggle';
 
+import { useSoundEngine } from '../hooks/useSoundEngine';
+
 type EngineType = ReturnType<typeof useGameEngine>;
+type SoundEngineType = ReturnType<typeof useSoundEngine>;
 
 interface Props {
   userId?: string;
   config?: GameConfig;
   engine?: EngineType;
+  sound?: SoundEngineType;
 }
 
-export default function GameScreen({ userId, config: configProp, engine: engineProp }: Props) {
+export default function GameScreen({ userId, config: configProp, engine: engineProp, sound }: Props) {
   const gameConfig = configProp ?? defaultConfig;
   const theme = gameConfig.theme;
   const ownEngine = useGameEngine(
@@ -93,7 +97,7 @@ export default function GameScreen({ userId, config: configProp, engine: engineP
 
       {/* ── Tap button ── */}
       <View style={styles.tapArea}>
-        <TapTarget onTap={tap} tapMultiplier={tapMultiplier}>
+        <TapTarget onTap={() => { tap(); sound?.play('tap'); }} tapMultiplier={tapMultiplier}>
           <View style={styles.tapButton}>
             <Text style={styles.tapIcon}>{primaryResource?.icon ?? '👆'}</Text>
             <Text style={styles.tapLabel}>Tap!</Text>
@@ -103,7 +107,7 @@ export default function GameScreen({ userId, config: configProp, engine: engineP
 
       {/* ── Prestige button ── */}
       {prestigeAvailable && (
-        <TouchableOpacity style={styles.prestigeButton} onPress={prestige}>
+        <TouchableOpacity style={styles.prestigeButton} onPress={() => { prestige(); sound?.play('prestige'); }}>
           <Text style={styles.prestigeButtonText}>
             {gameConfig.prestige.currencyIcon} Prestige — Reset for bonus!
           </Text>
@@ -157,10 +161,11 @@ export default function GameScreen({ userId, config: configProp, engine: engineP
                 canAfford={canAfford}
                 productionPerSec={perBuilding}
                 buyMode={buyMode}
-                onBuy={() => buyMode === 1
-                  ? purchaseBuilding(building.id)
-                  : purchaseBuildingBulk(building.id, buyMode)
-                }
+                onBuy={() => {
+                  if (buyMode === 1) purchaseBuilding(building.id);
+                  else purchaseBuildingBulk(building.id, buyMode);
+                  sound?.play('purchase');
+                }}
               />
             );
           })}
@@ -190,7 +195,7 @@ export default function GameScreen({ userId, config: configProp, engine: engineP
                 key={upgrade.id}
                 upgrade={upgrade}
                 canAfford={canAfford}
-                onBuy={() => purchaseUpgrade(upgrade.id)}
+                onBuy={() => { purchaseUpgrade(upgrade.id); sound?.play('upgrade'); }}
               />
             );
           })}

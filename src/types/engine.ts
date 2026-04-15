@@ -94,6 +94,7 @@ export interface GameConfig {
   prestigeShop: PrestigeUpgradeDef[];
   theme: ThemeConfig;
   balance: BalanceConfig;
+  sound: SoundConfig;
   remote: RemoteConfig;
 }
 
@@ -168,4 +169,18 @@ export interface PrestigeUpgradeDef {
 
 export interface PrestigeShopState {
   [upgradeId: string]: number; // level purchased
+}
+
+// ─── Sound Config ─────────────────────────────
+export interface SoundConfig {
+  enabled: boolean;
+  volume: number; // 0-1
+  sounds: {
+    tap?: string;           // asset key or URL
+    purchase?: string;
+    upgrade?: string;
+    achievement?: string;
+    prestige?: string;
+    milestone?: string;
+  };
 }
