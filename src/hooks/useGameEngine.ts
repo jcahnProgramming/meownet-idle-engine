@@ -1,10 +1,8 @@
 // ─────────────────────────────────────────────
 //  MeowNet Idle Engine — useGameEngine hook
-//  Drop this in any screen to get the full
-//  game loop wired up with auto-save + offline
 // ─────────────────────────────────────────────
 
-import { useEffect, useRef, useCallback, useReducer } from 'react';
+import { useEffect, useRef, useCallback, useReducer, useState } from 'react';
 import { AppState, AppStateStatus } from 'react-native';
 import { GameConfig, GameState } from '../types/engine';
 import {
@@ -54,72 +52,75 @@ export function useGameEngine({
   userId,
   autoSaveIntervalMs = 10_000,
 }: UseGameEngineOptions) {
+  const [loaded, setLoaded] = useState(false);
   const [state, dispatch] = useReducer(
     reducer(config),
-    undefined,
-    () => {
-      const saved = loadLocal(config);
-      if (saved) {
-        const { newState } = applyOfflineEarnings(config, saved);
-        return newState;
-      }
-      return createDefaultState(config);
-    }
+    createDefaultState(config)
   );
 
   const stateRef = useRef(state);
   stateRef.current = state;
 
-  // ── Game loop tick ──────────────────────
+  // Load saved state on mount
+  useEffect(() => {
+    loadLocal(config).then(saved => {
+      if (saved) {
+        const { newState } = applyOfflineEarnings(config, saved);
+        dispatch({ type: 'SET_STATE', state: newState });
+      }
+      setLoaded(true);
+    });
+  }, []);
+
+  // Game loop tick
   const lastTickRef = useRef(Date.now());
   useEffect(() => {
+    if (!loaded) return;
     const interval = setInterval(() => {
       const now = Date.now();
       dispatch({ type: 'TICK', deltaMs: now - lastTickRef.current });
       lastTickRef.current = now;
     }, config.balance.tickRateMs);
     return () => clearInterval(interval);
-  }, [config.balance.tickRateMs]);
+  }, [loaded, config.balance.tickRateMs]);
 
-  // ── Auto-save ───────────────────────────
+  // Auto-save
   useEffect(() => {
+    if (!loaded) return;
     const interval = setInterval(() => {
       saveLocal(config, stateRef.current);
       if (userId) syncToCloud(config, stateRef.current, userId).catch(() => {});
     }, autoSaveIntervalMs);
     return () => clearInterval(interval);
-  }, [config, userId, autoSaveIntervalMs]);
+  }, [loaded, config, userId, autoSaveIntervalMs]);
 
-  // ── App background/foreground ───────────
+  // App background/foreground
   useEffect(() => {
     const sub = AppState.addEventListener('change', (status: AppStateStatus) => {
       if (status === 'background') {
         saveLocal(config, stateRef.current);
       }
       if (status === 'active') {
-        const saved = loadLocal(config);
-        if (saved) {
-          const { newState } = applyOfflineEarnings(config, saved);
-          dispatch({ type: 'SET_STATE', state: newState });
-        }
+        loadLocal(config).then(saved => {
+          if (saved) {
+            const { newState } = applyOfflineEarnings(config, saved);
+            dispatch({ type: 'SET_STATE', state: newState });
+          }
+        });
       }
     });
     return () => sub.remove();
   }, [config]);
 
-  // ── Exposed actions ─────────────────────
   const tap = useCallback(() => dispatch({ type: 'TAP' }), []);
   const purchaseBuilding = useCallback(
-    (id: string) => dispatch({ type: 'BUY_BUILDING', buildingId: id }),
-    []
+    (id: string) => dispatch({ type: 'BUY_BUILDING', buildingId: id }), []
   );
   const purchaseUpgrade = useCallback(
-    (id: string) => dispatch({ type: 'BUY_UPGRADE', upgradeId: id }),
-    []
+    (id: string) => dispatch({ type: 'BUY_UPGRADE', upgradeId: id }), []
   );
   const prestige = useCallback(() => dispatch({ type: 'PRESTIGE' }), []);
 
-  // ── Derived helpers ─────────────────────
   const productionRates = calculateProductionRates(config, state);
   const getBuildingCostMemo = useCallback(
     (id: string) => getBuildingCost(config, state, id),
@@ -129,6 +130,7 @@ export function useGameEngine({
 
   return {
     state,
+    loaded,
     productionRates,
     getBuildingCost: getBuildingCostMemo,
     prestigeAvailable,

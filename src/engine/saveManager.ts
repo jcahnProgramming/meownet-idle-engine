@@ -1,33 +1,22 @@
 // ─────────────────────────────────────────────
 //  MeowNet Idle Engine — Save Manager
-//  Local: MMKV (fast, sync)
+//  Local: AsyncStorage (works in all dev modes)
 //  Cloud: Supabase hosted free tier
 // ─────────────────────────────────────────────
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createClient } from '@supabase/supabase-js';
 import { GameConfig, GameState } from '../types/engine';
 
-// MMKV loaded at runtime (native module)
-let _storage: any = null;
-function getStorage() {
-  if (!_storage) {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { MMKV } = require('react-native-mmkv');
-    _storage = new MMKV({ id: 'idle-engine-save' });
-  }
-  return _storage;
-}
-
 // ── Local save / load ──────────────────────
-export function saveLocal(config: GameConfig, state: GameState): void {
+export async function saveLocal(config: GameConfig, state: GameState): Promise<void> {
   const key = `game_state_${config.gameId}`;
-  getStorage().set(key, JSON.stringify({ ...state, lastSaveAt: Date.now() }));
+  await AsyncStorage.setItem(key, JSON.stringify({ ...state, lastSaveAt: Date.now() }));
 }
 
-export function loadLocal(config: GameConfig): GameState | null {
+export async function loadLocal(config: GameConfig): Promise<GameState | null> {
   const key = `game_state_${config.gameId}`;
-  const raw = getStorage().getString(key);
+  const raw = await AsyncStorage.getItem(key);
   if (!raw) return null;
   try {
     return JSON.parse(raw) as GameState;
@@ -36,11 +25,11 @@ export function loadLocal(config: GameConfig): GameState | null {
   }
 }
 
-export function clearLocal(config: GameConfig): void {
-  getStorage().delete(`game_state_${config.gameId}`);
+export async function clearLocal(config: GameConfig): Promise<void> {
+  await AsyncStorage.removeItem(`game_state_${config.gameId}`);
 }
 
-// ── Supabase client (hosted free tier) ─────
+// ── Supabase client ────────────────────────
 let _client: ReturnType<typeof createClient> | null = null;
 
 function getSupabaseClient(config: GameConfig) {
@@ -110,7 +99,7 @@ export async function getLeaderboard(
   return (data as any[]) ?? [];
 }
 
-// ── Remote config (live balance tuning) ────
+// ── Remote config ──────────────────────────
 export async function fetchRemoteConfig(
   config: GameConfig
 ): Promise<Partial<GameConfig> | null> {
