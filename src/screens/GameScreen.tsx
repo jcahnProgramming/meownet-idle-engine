@@ -21,6 +21,7 @@ import { HUD } from '../components/hud/HUD';
 import { TapTarget } from '../components/hud/TapTarget';
 import { OfflineEarningsModal } from '../components/hud/OfflineEarningsModal';
 import { AchievementToast } from '../components/hud/AchievementToast';
+import { BuyModeToggle, BuyMode } from '../components/buildings/BuyModeToggle';
 
 const theme = gameConfig.theme;
 
@@ -31,6 +32,7 @@ export default function GameScreen({ userId }: Props) {
     state,
     productionRates,
     getBuildingCost,
+    getBuildingBulkCost,
     prestigeAvailable,
     pendingOfflineEarnings,
     dismissOfflineEarnings,
@@ -38,11 +40,13 @@ export default function GameScreen({ userId }: Props) {
     dismissAchievement,
     tap,
     purchaseBuilding,
+    purchaseBuildingBulk,
     purchaseUpgrade,
     prestige,
   } = useGameEngine({ config: gameConfig, userId });
 
   const [activeTab, setActiveTab] = useState<'buildings' | 'upgrades'>('buildings');
+  const [buyMode, setBuyMode] = useState<BuyMode>(1);
 
   const primaryResource = gameConfig.resources[0];
 
@@ -105,9 +109,12 @@ export default function GameScreen({ userId }: Props) {
       {/* ── Buildings list ── */}
       {activeTab === 'buildings' && (
         <ScrollView style={styles.list} contentContainerStyle={styles.listContent}>
+          <BuyModeToggle mode={buyMode} onChange={setBuyMode} />
           {gameConfig.buildings.map(building => {
             const count = state.buildings[building.id] ?? 0;
-            const cost = getBuildingCost(building.id);
+            const cost = buyMode === 1
+              ? getBuildingCost(building.id)
+              : getBuildingBulkCost(building.id, buyMode);
             const canAfford = Object.entries(cost).every(
               ([rid, amt]) => (state.resources[rid] ?? 0) >= amt
             );
@@ -117,9 +124,8 @@ export default function GameScreen({ userId }: Props) {
 
             if (!unlocked && count === 0) return null;
 
-            // Per-building production (with multipliers)
             const perBuilding: Record<string, number> = {};
-            for (const [rid, base] of Object.entries(building.baseProduction)) {
+            for (const [rid] of Object.entries(building.baseProduction)) {
               perBuilding[rid] = (productionRates[rid] ?? 0);
             }
 
@@ -131,7 +137,11 @@ export default function GameScreen({ userId }: Props) {
                 cost={cost}
                 canAfford={canAfford}
                 productionPerSec={perBuilding}
-                onBuy={() => purchaseBuilding(building.id)}
+                buyMode={buyMode}
+                onBuy={() => buyMode === 1
+                  ? purchaseBuilding(building.id)
+                  : purchaseBuildingBulk(building.id, buyMode)
+                }
               />
             );
           })}

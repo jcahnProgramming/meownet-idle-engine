@@ -10,12 +10,14 @@ import {
   applyOfflineEarnings,
   handleTap,
   buyBuilding,
+  buyBuildingBulk,
   buyUpgrade,
   applyPrestige,
   canPrestige,
   createDefaultState,
   calculateProductionRates,
   getBuildingCost,
+  getBuildingBulkCost,
 } from '../engine/gameLoop';
 import { checkAchievements, applyAchievements } from '../engine/achievementEngine';
 import { saveLocal, loadLocal, syncToCloud } from '../engine/saveManager';
@@ -31,6 +33,7 @@ type Action =
   | { type: 'TICK'; deltaMs: number }
   | { type: 'TAP' }
   | { type: 'BUY_BUILDING'; buildingId: string }
+  | { type: 'BUY_BUILDING_BULK'; buildingId: string; count: number | 'max' }
   | { type: 'BUY_UPGRADE'; upgradeId: string }
   | { type: 'PRESTIGE' };
 
@@ -42,6 +45,7 @@ function reducer(config: GameConfig, achievements: AchievementDef[]) {
       case 'TICK': next = tick(config, state, action.deltaMs); break;
       case 'TAP': next = { ...handleTap(config, state), tapCount: (state.tapCount ?? 0) + 1 }; break;
       case 'BUY_BUILDING': next = buyBuilding(config, state, action.buildingId) ?? state; break;
+      case 'BUY_BUILDING_BULK': next = buyBuildingBulk(config, state, action.buildingId, action.count) ?? state; break;
       case 'BUY_UPGRADE': next = buyUpgrade(config, state, action.upgradeId) ?? state; break;
       case 'PRESTIGE': next = canPrestige(config, state) ? applyPrestige(config, state) : state; break;
       default: return state;
@@ -180,6 +184,9 @@ export function useGameEngine({
   const purchaseBuilding = useCallback(
     (id: string) => dispatch({ type: 'BUY_BUILDING', buildingId: id }), []
   );
+  const purchaseBuildingBulk = useCallback(
+    (id: string, count: number | 'max') => dispatch({ type: 'BUY_BUILDING_BULK', buildingId: id, count }), []
+  );
   const purchaseUpgrade = useCallback(
     (id: string) => dispatch({ type: 'BUY_UPGRADE', upgradeId: id }), []
   );
@@ -200,12 +207,17 @@ export function useGameEngine({
     (id: string) => getBuildingCost(config, state, id),
     [config, state]
   );
+  const getBuildingBulkCostMemo = useCallback(
+    (id: string, count: number | 'max') => getBuildingBulkCost(config, state, id, count),
+    [config, state]
+  );
 
   return {
     state,
     loaded,
     productionRates,
     getBuildingCost: getBuildingCostMemo,
+    getBuildingBulkCost: getBuildingBulkCostMemo,
     prestigeAvailable: canPrestige(config, state),
     pendingOfflineEarnings,
     dismissOfflineEarnings,
@@ -213,6 +225,7 @@ export function useGameEngine({
     dismissAchievement,
     tap,
     purchaseBuilding,
+    purchaseBuildingBulk,
     purchaseUpgrade,
     prestige,
   };

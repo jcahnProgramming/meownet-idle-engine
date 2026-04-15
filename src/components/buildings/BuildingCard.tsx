@@ -7,6 +7,7 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { BuildingDef } from '../../types/engine';
 import { gameConfig } from '../../config/gameConfig';
 import { formatNumber } from '../../engine/gameLoop';
+import { BuyMode } from './BuyModeToggle';
 
 const theme = gameConfig.theme;
 
@@ -16,10 +17,12 @@ interface Props {
   cost: Record<string, number>;
   canAfford: boolean;
   productionPerSec: Record<string, number>;
+  buyMode?: BuyMode;
   onBuy: () => void;
 }
 
-export function BuildingCard({ building, count, cost, canAfford, productionPerSec, onBuy }: Props) {
+export function BuildingCard({ building, count, cost, canAfford, productionPerSec, buyMode = 1, onBuy }: Props) {
+  const buyLabel = buyMode === 'max' ? 'Max' : buyMode === 1 ? null : `x${buyMode}`;
   return (
     <TouchableOpacity
       style={[styles.card, !canAfford && styles.cardDisabled]}
@@ -32,7 +35,7 @@ export function BuildingCard({ building, count, cost, canAfford, productionPerSe
         <Text style={styles.icon}>{building.icon}</Text>
         {count > 0 && (
           <View style={[styles.badge, { backgroundColor: theme.primaryColor }]}>
-            <Text style={styles.badgeText}>{count}</Text>
+            <Text style={styles.badgeText}>{buyLabel ?? count}</Text>
           </View>
         )}
       </View>

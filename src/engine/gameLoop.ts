@@ -258,3 +258,66 @@ export function createDefaultState(config: GameConfig): GameState {
     totalPlaytimeMs: 0,
   };
 }
+
+// ── Bulk buy buildings ──────────────────────
+export function buyBuildingBulk(
+  config: GameConfig,
+  state: GameState,
+  buildingId: string,
+  count: number | 'max'
+): GameState | null {
+  const building = config.buildings.find(b => b.id === buildingId);
+  if (!building) return null;
+
+  const affordable = getAffordableCount(config, state, buildingId);
+  const toBuy = count === 'max' ? affordable : Math.min(count, affordable);
+  if (toBuy <= 0) return null;
+
+  const owned = state.buildings[buildingId] ?? 0;
+  const newResources = { ...state.resources };
+
+  // Deduct total cost for all purchases
+  for (const [resourceId, baseCost] of Object.entries(building.baseCost)) {
+    let totalCost = 0;
+    for (let i = 0; i < toBuy; i++) {
+      totalCost = add(totalCost, floor(multiply(baseCost, pow(building.costScaling, owned + i))));
+    }
+    if ((newResources[resourceId] ?? 0) < totalCost) return null;
+    newResources[resourceId] = add(newResources[resourceId] ?? 0, -totalCost);
+  }
+
+  return {
+    ...state,
+    resources: newResources,
+    buildings: {
+      ...state.buildings,
+      [buildingId]: owned + toBuy,
+    },
+  };
+}
+
+// ── Cost for bulk purchase ──────────────────
+export function getBuildingBulkCost(
+  config: GameConfig,
+  state: GameState,
+  buildingId: string,
+  count: number | 'max'
+): Record<string, number> {
+  const building = config.buildings.find(b => b.id === buildingId);
+  if (!building) return {};
+
+  const affordable = getAffordableCount(config, state, buildingId);
+  const toBuy = count === 'max' ? affordable : Math.min(count, affordable);
+  const owned = state.buildings[buildingId] ?? 0;
+  const result: Record<string, number> = {};
+
+  for (const [resourceId, baseCost] of Object.entries(building.baseCost)) {
+    let totalCost = 0;
+    for (let i = 0; i < toBuy; i++) {
+      totalCost = add(totalCost, floor(multiply(baseCost, pow(building.costScaling, owned + i))));
+    }
+    result[resourceId] = totalCost;
+  }
+
+  return result;
+}
