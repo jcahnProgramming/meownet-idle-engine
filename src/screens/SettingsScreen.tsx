@@ -12,20 +12,21 @@ import {
   ScrollView,
   SafeAreaView,
 } from 'react-native';
-import { gameConfig } from '../config/gameConfig';
+import { gameConfig as defaultConfig } from '../config/gameConfig';
+import { GameConfig, GameState } from '../types/engine';
 import { useAuth } from '../hooks/useAuth';
 import { clearLocal } from '../engine/saveManager';
-import { GameState } from '../types/engine';
 import { formatNumber } from '../engine/gameLoop';
 
-const theme = gameConfig.theme;
-
 interface Props {
+  config?: GameConfig;
   state: GameState;
   onReset: () => void;
 }
 
-export default function SettingsScreen({ state, onReset }: Props) {
+export default function SettingsScreen({ config: configProp, state, onReset }: Props) {
+  const gameConfig = configProp ?? defaultConfig;
+  const theme = gameConfig.theme;
   const { user, username, signOut } = useAuth();
 
   const handleReset = () => {
@@ -139,15 +140,17 @@ export default function SettingsScreen({ state, onReset }: Props) {
   );
 }
 
+const defaultTheme = defaultConfig.theme;
+
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: theme.backgroundColor },
+  root: { flex: 1, backgroundColor: defaultTheme.backgroundColor },
   content: { padding: 16, gap: 12 },
   section: { alignItems: 'center', paddingVertical: 16 },
   gameIcon: { fontSize: 52 },
-  gameName: { fontSize: 22, fontWeight: '800', color: theme.textColor, marginTop: 8 },
+  gameName: { fontSize: 22, fontWeight: '800', color: defaultTheme.textColor, marginTop: 8 },
   version: { fontSize: 12, color: 'rgba(255,255,255,0.3)', marginTop: 4 },
   card: {
-    backgroundColor: theme.surfaceColor,
+    backgroundColor: defaultTheme.surfaceColor,
     borderRadius: 14,
     padding: 16,
     borderWidth: 1,
@@ -171,31 +174,17 @@ const styles = StyleSheet.create({
     borderBottomColor: 'rgba(255,255,255,0.04)',
   },
   rowLabel: { fontSize: 14, color: 'rgba(255,255,255,0.55)' },
-  rowValue: { fontSize: 14, fontWeight: '600', color: theme.textColor },
-  infoText: {
-    fontSize: 13,
-    color: 'rgba(255,255,255,0.5)',
-    lineHeight: 20,
-  },
+  rowValue: { fontSize: 14, fontWeight: '600', color: defaultTheme.textColor },
+  infoText: { fontSize: 13, color: 'rgba(255,255,255,0.5)', lineHeight: 20 },
   dangerButton: {
-    marginTop: 8,
-    height: 44,
-    borderRadius: 10,
-    backgroundColor: 'rgba(220,50,50,0.15)',
-    borderWidth: 1,
-    borderColor: 'rgba(220,50,50,0.35)',
-    alignItems: 'center',
-    justifyContent: 'center',
+    marginTop: 8, height: 44, borderRadius: 10,
+    backgroundColor: 'rgba(220,50,50,0.15)', borderWidth: 1,
+    borderColor: 'rgba(220,50,50,0.35)', alignItems: 'center', justifyContent: 'center',
   },
   dangerButtonText: { color: '#E05050', fontWeight: '700', fontSize: 14 },
   signOutButton: {
-    marginTop: 8,
-    height: 44,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-    alignItems: 'center',
-    justifyContent: 'center',
+    marginTop: 8, height: 44, borderRadius: 10, borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)', alignItems: 'center', justifyContent: 'center',
   },
   signOutText: { color: 'rgba(255,255,255,0.45)', fontWeight: '600', fontSize: 14 },
 });

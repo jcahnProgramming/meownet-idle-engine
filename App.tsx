@@ -1,10 +1,11 @@
 // ─────────────────────────────────────────────
 //  MeowNet Idle Engine — App Entry Point
-//  Auth gate → bottom tab navigation
+//  Auth gate → remote config → bottom tab navigation
 // ─────────────────────────────────────────────
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
+import { View, ActivityIndicator } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Text } from 'react-native';
@@ -15,9 +16,10 @@ import GameScreen from './src/screens/GameScreen';
 import LeaderboardScreen from './src/screens/LeaderboardScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 import { gameConfig } from './src/config/gameConfig';
+import { GameConfig } from './src/types/engine';
 import { createDefaultState } from './src/engine/gameLoop';
+import { loadRemoteConfig } from './src/engine/remoteConfig';
 
-const theme = gameConfig.theme;
 const Tab = createBottomTabNavigator();
 
 function TabIcon({ icon, focused }: { icon: string; focused: boolean }) {
@@ -26,8 +28,9 @@ function TabIcon({ icon, focused }: { icon: string; focused: boolean }) {
   );
 }
 
-function MainTabs({ userId }: { userId?: string }) {
-  const [gameState, setGameState] = useState(createDefaultState(gameConfig));
+function MainTabs({ userId, config }: { userId?: string; config: GameConfig }) {
+  const theme = config.theme;
+  const [gameState, setGameState] = useState(createDefaultState(config));
 
   return (
     <Tab.Navigator
@@ -49,20 +52,21 @@ function MainTabs({ userId }: { userId?: string }) {
         name="Game"
         options={{
           tabBarIcon: ({ focused }) => (
-            <TabIcon icon={gameConfig.resources[0]?.icon ?? '🎮'} focused={focused} />
+            <TabIcon icon={config.resources[0]?.icon ?? '🎮'} focused={focused} />
           ),
         }}
       >
-        {() => <GameScreen userId={userId} />}
+        {() => <GameScreen userId={userId} config={config} />}
       </Tab.Screen>
 
       <Tab.Screen
         name="Leaderboard"
-        component={LeaderboardScreen}
         options={{
           tabBarIcon: ({ focused }) => <TabIcon icon="🏆" focused={focused} />,
         }}
-      />
+      >
+        {() => <LeaderboardScreen config={config} />}
+      </Tab.Screen>
 
       <Tab.Screen
         name="Settings"
@@ -72,8 +76,9 @@ function MainTabs({ userId }: { userId?: string }) {
       >
         {() => (
           <SettingsScreen
+            config={config}
             state={gameState}
-            onReset={() => setGameState(createDefaultState(gameConfig))}
+            onReset={() => setGameState(createDefaultState(config))}
           />
         )}
       </Tab.Screen>
@@ -84,8 +89,26 @@ function MainTabs({ userId }: { userId?: string }) {
 export default function App() {
   const { user, loading } = useAuth();
   const [authed, setAuthed] = useState(false);
+  const [activeConfig, setActiveConfig] = useState<GameConfig>(gameConfig);
+  const [configLoaded, setConfigLoaded] = useState(false);
 
-  if (loading) return null;
+  // Load remote config overrides on startup
+  useEffect(() => {
+    loadRemoteConfig(gameConfig).then(merged => {
+      setActiveConfig(merged);
+      setConfigLoaded(true);
+    });
+  }, []);
+
+  if (loading || !configLoaded) {
+    return (
+      <View style={{ flex: 1, backgroundColor: gameConfig.theme.backgroundColor, alignItems: 'center', justifyContent: 'center' }}>
+        <StatusBar style="light" />
+        <Text style={{ fontSize: 48 }}>{gameConfig.resources[0]?.icon ?? '🎮'}</Text>
+        <ActivityIndicator color={gameConfig.theme.primaryColor} style={{ marginTop: 16 }} />
+      </View>
+    );
+  }
 
   if (!user && !authed) {
     return (
@@ -100,7 +123,7 @@ export default function App() {
     <>
       <StatusBar style="light" />
       <NavigationContainer>
-        <MainTabs userId={user?.id} />
+        <MainTabs userId={user?.id} config={activeConfig} />
       </NavigationContainer>
     </>
   );

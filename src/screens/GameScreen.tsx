@@ -13,7 +13,8 @@ import {
   StyleSheet,
   SafeAreaView,
 } from 'react-native';
-import { gameConfig } from '../config/gameConfig';
+import { gameConfig as defaultConfig } from '../config/gameConfig';
+import { GameConfig } from '../types/engine';
 import { useGameEngine } from '../hooks/useGameEngine';
 import { BuildingCard } from '../components/buildings/BuildingCard';
 import { UpgradeCard } from '../components/shop/UpgradeCard';
@@ -23,11 +24,11 @@ import { OfflineEarningsModal } from '../components/hud/OfflineEarningsModal';
 import { AchievementToast } from '../components/hud/AchievementToast';
 import { BuyModeToggle, BuyMode } from '../components/buildings/BuyModeToggle';
 
-const theme = gameConfig.theme;
+interface Props { userId?: string; config?: GameConfig }
 
-interface Props { userId?: string }
-
-export default function GameScreen({ userId }: Props) {
+export default function GameScreen({ userId, config: configProp }: Props) {
+  const gameConfig = configProp ?? defaultConfig;
+  const theme = gameConfig.theme;
   const {
     state,
     productionRates,
@@ -185,17 +186,19 @@ export default function GameScreen({ userId }: Props) {
   );
 }
 
+const defaultTheme = defaultConfig.theme;
+
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: theme.backgroundColor },
+  root: { flex: 1, backgroundColor: defaultTheme.backgroundColor },
   tapArea: { alignItems: 'center', paddingVertical: 20 },
   tapButton: {
     width: 140,
     height: 140,
     borderRadius: 70,
-    backgroundColor: theme.primaryColor,
+    backgroundColor: defaultTheme.primaryColor,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: theme.primaryColor,
+    shadowColor: defaultTheme.primaryColor,
     shadowOpacity: 0.6,
     shadowRadius: 24,
     shadowOffset: { width: 0, height: 0 },
@@ -210,10 +213,10 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: 'rgba(255,209,102,0.12)',
     borderWidth: 1,
-    borderColor: theme.accentColor,
+    borderColor: defaultTheme.accentColor,
     alignItems: 'center',
   },
-  prestigeButtonText: { color: theme.accentColor, fontWeight: '700', fontSize: 14 },
+  prestigeButtonText: { color: defaultTheme.accentColor, fontWeight: '700', fontSize: 14 },
   tabBar: {
     flexDirection: 'row',
     borderTopWidth: 1,
@@ -222,9 +225,9 @@ const styles = StyleSheet.create({
     borderBottomColor: 'rgba(255,255,255,0.05)',
   },
   tab: { flex: 1, paddingVertical: 11, alignItems: 'center' },
-  tabActive: { borderBottomWidth: 2, borderBottomColor: theme.primaryColor },
+  tabActive: { borderBottomWidth: 2, borderBottomColor: defaultTheme.primaryColor },
   tabText: { color: 'rgba(255,255,255,0.35)', fontSize: 14, fontWeight: '600' },
-  tabTextActive: { color: theme.primaryColor },
+  tabTextActive: { color: defaultTheme.primaryColor },
   list: { flex: 1 },
   listContent: { padding: 12, gap: 8 },
   emptyText: { color: 'rgba(255,255,255,0.3)', textAlign: 'center', marginTop: 40, fontSize: 15 },
