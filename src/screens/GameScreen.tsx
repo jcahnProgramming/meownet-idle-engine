@@ -20,6 +20,7 @@ import { UpgradeCard } from '../components/shop/UpgradeCard';
 import { HUD } from '../components/hud/HUD';
 import { TapTarget } from '../components/hud/TapTarget';
 import { OfflineEarningsModal } from '../components/hud/OfflineEarningsModal';
+import { AchievementToast } from '../components/hud/AchievementToast';
 
 const theme = gameConfig.theme;
 
@@ -33,6 +34,8 @@ export default function GameScreen({ userId }: Props) {
     prestigeAvailable,
     pendingOfflineEarnings,
     dismissOfflineEarnings,
+    pendingAchievement,
+    dismissAchievement,
     tap,
     purchaseBuilding,
     purchaseUpgrade,
@@ -56,6 +59,10 @@ export default function GameScreen({ userId }: Props) {
       <OfflineEarningsModal
         earnings={pendingOfflineEarnings}
         onCollect={dismissOfflineEarnings}
+      />
+      <AchievementToast
+        achievement={pendingAchievement}
+        onDismiss={dismissAchievement}
       />
 
       {/* ── HUD ── */}

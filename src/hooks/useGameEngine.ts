@@ -4,7 +4,7 @@
 
 import { useEffect, useRef, useCallback, useReducer, useState } from 'react';
 import { AppState, AppStateStatus } from 'react-native';
-import { GameConfig, GameState, ResourceState } from '../types/engine';
+import { GameConfig, GameState, ResourceState, AchievementDef } from '../types/engine';
 import {
   tick,
   applyOfflineEarnings,
@@ -17,7 +17,9 @@ import {
   calculateProductionRates,
   getBuildingCost,
 } from '../engine/gameLoop';
+import { checkAchievements, applyAchievements } from '../engine/achievementEngine';
 import { saveLocal, loadLocal, syncToCloud } from '../engine/saveManager';
+import { achievements as defaultAchievements } from '../config/gameConfig';
 
 export interface OfflineEarnings {
   offlineMs: number;
@@ -32,17 +34,21 @@ type Action =
   | { type: 'BUY_UPGRADE'; upgradeId: string }
   | { type: 'PRESTIGE' };
 
-function reducer(config: GameConfig) {
+function reducer(config: GameConfig, achievements: AchievementDef[]) {
   return (state: GameState, action: Action): GameState => {
+    let next: GameState;
     switch (action.type) {
       case 'SET_STATE': return action.state;
-      case 'TICK': return tick(config, state, action.deltaMs);
-      case 'TAP': return handleTap(config, state);
-      case 'BUY_BUILDING': return buyBuilding(config, state, action.buildingId) ?? state;
-      case 'BUY_UPGRADE': return buyUpgrade(config, state, action.upgradeId) ?? state;
-      case 'PRESTIGE': return canPrestige(config, state) ? applyPrestige(config, state) : state;
+      case 'TICK': next = tick(config, state, action.deltaMs); break;
+      case 'TAP': next = { ...handleTap(config, state), tapCount: (state.tapCount ?? 0) + 1 }; break;
+      case 'BUY_BUILDING': next = buyBuilding(config, state, action.buildingId) ?? state; break;
+      case 'BUY_UPGRADE': next = buyUpgrade(config, state, action.upgradeId) ?? state; break;
+      case 'PRESTIGE': next = canPrestige(config, state) ? applyPrestige(config, state) : state; break;
       default: return state;
     }
+    // Check achievements after every state change
+    const newlyUnlocked = checkAchievements(achievements, next, state);
+    return applyAchievements(next, newlyUnlocked);
   };
 }
 
@@ -68,13 +74,36 @@ export function useGameEngine({
 }: UseGameEngineOptions) {
   const [loaded, setLoaded] = useState(false);
   const [pendingOfflineEarnings, setPendingOfflineEarnings] = useState<OfflineEarnings | null>(null);
+  const [pendingAchievement, setPendingAchievement] = useState<AchievementDef | null>(null);
+  const achievementQueue = useRef<AchievementDef[]>([]);
 
   const [state, dispatch] = useReducer(
-    reducer(config),
+    reducer(config, defaultAchievements),
     createDefaultState(config)
   );
 
   const stateRef = useRef(state);
+  const prevStateRef = useRef(state);
+
+  // Detect newly unlocked achievements by watching state
+  useEffect(() => {
+    const prev = prevStateRef.current;
+    const curr = state;
+    prevStateRef.current = curr;
+
+    // Find achievements unlocked in this state that weren't before
+    for (const a of defaultAchievements) {
+      if (curr.achievements[a.id] && !prev.achievements[a.id]) {
+        achievementQueue.current.push(a);
+      }
+    }
+
+    // Show next in queue if nothing showing
+    if (!pendingAchievement && achievementQueue.current.length > 0) {
+      setPendingAchievement(achievementQueue.current.shift()!);
+    }
+  }, [state]);
+
   stateRef.current = state;
 
   // Load saved state on mount
@@ -84,10 +113,7 @@ export function useGameEngine({
         const before = saved.resources;
         const { newState, offlineMs } = applyOfflineEarnings(config, saved);
         const earned = diffResources(before, newState.resources);
-
         dispatch({ type: 'SET_STATE', state: newState });
-
-        // Only show modal if away > 1 min and earned something meaningful
         if (offlineMs > 60_000 && Object.keys(earned).length > 0) {
           setPendingOfflineEarnings({ offlineMs, earned });
         }
@@ -121,9 +147,7 @@ export function useGameEngine({
   // App background/foreground
   useEffect(() => {
     const sub = AppState.addEventListener('change', (status: AppStateStatus) => {
-      if (status === 'background') {
-        saveLocal(config, stateRef.current);
-      }
+      if (status === 'background') saveLocal(config, stateRef.current);
       if (status === 'active') {
         loadLocal(config).then(saved => {
           if (saved) {
@@ -150,22 +174,32 @@ export function useGameEngine({
   );
   const prestige = useCallback(() => dispatch({ type: 'PRESTIGE' }), []);
   const dismissOfflineEarnings = useCallback(() => setPendingOfflineEarnings(null), []);
+  const dismissAchievement = useCallback(() => {
+    setPendingAchievement(null);
+    // Show next queued achievement after short delay
+    setTimeout(() => {
+      if (achievementQueue.current.length > 0) {
+        setPendingAchievement(achievementQueue.current.shift()!);
+      }
+    }, 500);
+  }, []);
 
   const productionRates = calculateProductionRates(config, state);
   const getBuildingCostMemo = useCallback(
     (id: string) => getBuildingCost(config, state, id),
     [config, state]
   );
-  const prestigeAvailable = canPrestige(config, state);
 
   return {
     state,
     loaded,
     productionRates,
     getBuildingCost: getBuildingCostMemo,
-    prestigeAvailable,
+    prestigeAvailable: canPrestige(config, state),
     pendingOfflineEarnings,
     dismissOfflineEarnings,
+    pendingAchievement,
+    dismissAchievement,
     tap,
     purchaseBuilding,
     purchaseUpgrade,

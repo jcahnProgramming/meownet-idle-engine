@@ -90,6 +90,7 @@ export interface GameConfig {
   buildings: BuildingDef[];
   upgrades: UpgradeDef[];
   prestige: PrestigeConfig;
+  achievements: AchievementDef[];
   theme: ThemeConfig;
   balance: BalanceConfig;
   remote: RemoteConfig;
@@ -119,7 +120,32 @@ export interface GameState {
   buildings: BuildingState;
   upgrades: UpgradeState;
   prestige: PrestigeState;
+  achievements: AchievementState;
+  tapCount: number;
   lastSaveAt: number;     // unix ms
   lastTickAt: number;
   totalPlaytimeMs: number;
+}
+
+// ─── Achievements ─────────────────────────────
+export type AchievementTrigger =
+  | { type: 'resource_total'; resourceId: string; amount: number }
+  | { type: 'building_count'; buildingId: string; count: number }
+  | { type: 'upgrade_purchased'; upgradeId: string }
+  | { type: 'prestige_count'; count: number }
+  | { type: 'tap_count'; count: number };
+
+export interface AchievementDef {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  trigger: AchievementTrigger;
+  hidden?: boolean; // don't show until unlocked
+}
+
+export interface AchievementState {
+  [achievementId: string]: {
+    unlockedAt: number; // unix ms
+  };
 }

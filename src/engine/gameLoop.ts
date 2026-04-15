@@ -1,10 +1,12 @@
 // ─────────────────────────────────────────────
 //  MeowNet Idle Engine — Game Loop
-//  Reads GameConfig, manages state, never has
-//  game-specific logic baked in.
+//  All arithmetic via bignum for precision
 // ─────────────────────────────────────────────
 
 import { GameConfig, GameState, ResourceState } from '../types/engine';
+import { add, multiply, floor, pow, min } from './bignum';
+
+export { formatNumber } from './bignum';
 
 // ── Production rate calculator ─────────────
 export function calculateProductionRates(
@@ -12,7 +14,6 @@ export function calculateProductionRates(
   state: GameState
 ): Record<string, number> {
   const rates: Record<string, number> = {};
-
   for (const resource of config.resources) {
     rates[resource.id] = 0;
   }
@@ -21,7 +22,6 @@ export function calculateProductionRates(
     const count = state.buildings[building.id] ?? 0;
     if (count === 0) continue;
 
-    // Gather multipliers from purchased upgrades
     let multiplier = 1;
     for (const upgrade of config.upgrades) {
       if (!state.upgrades[upgrade.id]) continue;
@@ -29,15 +29,16 @@ export function calculateProductionRates(
         upgrade.effect.type === 'building_multiplier' &&
         upgrade.effect.targetId === building.id
       ) {
-        multiplier *= upgrade.effect.multiplier ?? 1;
+        multiplier = multiply(multiplier, upgrade.effect.multiplier ?? 1);
       }
       if (upgrade.effect.type === 'global_multiplier') {
-        multiplier *= upgrade.effect.multiplier ?? 1;
+        multiplier = multiply(multiplier, upgrade.effect.multiplier ?? 1);
       }
     }
 
     for (const [resourceId, baseRate] of Object.entries(building.baseProduction)) {
-      rates[resourceId] = (rates[resourceId] ?? 0) + baseRate * count * multiplier;
+      const contribution = multiply(multiply(baseRate, count), multiplier);
+      rates[resourceId] = add(rates[resourceId] ?? 0, contribution);
     }
   }
 
@@ -55,12 +56,35 @@ export function getBuildingCost(
   const owned = state.buildings[buildingId] ?? 0;
   const result: Record<string, number> = {};
   for (const [resourceId, baseCost] of Object.entries(building.baseCost)) {
-    result[resourceId] = Math.floor(baseCost * Math.pow(building.costScaling, owned));
+    result[resourceId] = floor(multiply(baseCost, pow(building.costScaling, owned)));
   }
   return result;
 }
 
-// ── Tick: advance state by deltaMs ─────────
+// ── How many can afford right now ──────────
+export function getAffordableCount(
+  config: GameConfig,
+  state: GameState,
+  buildingId: string,
+  budget?: number
+): number {
+  const building = config.buildings.find(b => b.id === buildingId);
+  if (!building) return 0;
+  const primaryResource = config.resources[0];
+  if (!primaryResource) return 0;
+  const available = budget ?? (state.resources[primaryResource.id] ?? 0);
+  const owned = state.buildings[buildingId] ?? 0;
+  const baseCost = building.baseCost[primaryResource.id] ?? 0;
+  const k = building.costScaling;
+
+  // n = floor(log(available * (k-1) / baseCost / k^owned + 1) / log(k))
+  if (baseCost === 0) return 0;
+  const inner = (available * (k - 1)) / (baseCost * Math.pow(k, owned)) + 1;
+  if (inner <= 0) return 0;
+  return Math.max(0, Math.floor(Math.log(inner) / Math.log(k)));
+}
+
+// ── Tick ────────────────────────────────────
 export function tick(
   config: GameConfig,
   state: GameState,
@@ -71,10 +95,10 @@ export function tick(
   const newResources = { ...state.resources };
 
   for (const resource of config.resources) {
-    const earned = (rates[resource.id] ?? 0) * deltaSec;
+    const earned = multiply(rates[resource.id] ?? 0, deltaSec);
     const current = newResources[resource.id] ?? 0;
     const cap = resource.cap === 'infinite' ? Infinity : resource.cap;
-    newResources[resource.id] = Math.min(current + earned, cap);
+    newResources[resource.id] = min(add(current, earned), cap);
   }
 
   return {
@@ -85,7 +109,7 @@ export function tick(
   };
 }
 
-// ── Offline earnings catch-up ───────────────
+// ── Offline earnings ────────────────────────
 export function applyOfflineEarnings(
   config: GameConfig,
   state: GameState
@@ -94,13 +118,12 @@ export function applyOfflineEarnings(
   const elapsed = now - state.lastTickAt;
   const maxOfflineMs = config.balance.maxOfflineHours * 3600 * 1000;
   const cappedElapsed = Math.min(elapsed, maxOfflineMs);
-  const offlineElapsed = cappedElapsed * config.balance.offlineEarningsRate;
-
+  const offlineElapsed = multiply(cappedElapsed, config.balance.offlineEarningsRate);
   const newState = tick(config, state, offlineElapsed);
   return { newState: { ...newState, lastTickAt: now }, offlineMs: cappedElapsed };
 }
 
-// ── Tap action ─────────────────────────────
+// ── Tap ─────────────────────────────────────
 export function handleTap(
   config: GameConfig,
   state: GameState
@@ -111,21 +134,21 @@ export function handleTap(
   let tapMultiplier = config.balance.tapProductionMultiplier;
   for (const upgrade of config.upgrades) {
     if (state.upgrades[upgrade.id] && upgrade.effect.type === 'tap_multiplier') {
-      tapMultiplier *= upgrade.effect.multiplier ?? 1;
+      tapMultiplier = multiply(tapMultiplier, upgrade.effect.multiplier ?? 1);
     }
   }
 
   const newResources = { ...state.resources };
   const cap = primaryResource.cap === 'infinite' ? Infinity : primaryResource.cap;
-  newResources[primaryResource.id] = Math.min(
-    (newResources[primaryResource.id] ?? 0) + tapMultiplier,
+  newResources[primaryResource.id] = min(
+    add(newResources[primaryResource.id] ?? 0, tapMultiplier),
     cap
   );
 
   return { ...state, resources: newResources };
 }
 
-// ── Buy building ───────────────────────────
+// ── Buy building ────────────────────────────
 export function buyBuilding(
   config: GameConfig,
   state: GameState,
@@ -137,14 +160,11 @@ export function buyBuilding(
   const cost = getBuildingCost(config, state, buildingId);
   const newResources = { ...state.resources };
 
-  // Check affordability
   for (const [resourceId, amount] of Object.entries(cost)) {
     if ((newResources[resourceId] ?? 0) < amount) return null;
   }
-
-  // Deduct cost
   for (const [resourceId, amount] of Object.entries(cost)) {
-    newResources[resourceId] -= amount;
+    newResources[resourceId] = add(newResources[resourceId] ?? 0, -amount);
   }
 
   return {
@@ -157,7 +177,7 @@ export function buyBuilding(
   };
 }
 
-// ── Buy upgrade ────────────────────────────
+// ── Buy upgrade ─────────────────────────────
 export function buyUpgrade(
   config: GameConfig,
   state: GameState,
@@ -169,7 +189,7 @@ export function buyUpgrade(
   const newResources = { ...state.resources };
   for (const [resourceId, amount] of Object.entries(upgrade.cost)) {
     if ((newResources[resourceId] ?? 0) < amount) return null;
-    newResources[resourceId] -= amount;
+    newResources[resourceId] = add(newResources[resourceId] ?? 0, -amount);
   }
 
   return {
@@ -179,21 +199,17 @@ export function buyUpgrade(
   };
 }
 
-// ── Prestige ───────────────────────────────
+// ── Prestige ────────────────────────────────
 export function canPrestige(config: GameConfig, state: GameState): boolean {
   if (!config.prestige.enabled) return false;
-  const amount = state.resources[config.prestige.requiredResource] ?? 0;
-  return amount >= config.prestige.requiredAmount;
+  return (state.resources[config.prestige.requiredResource] ?? 0) >= config.prestige.requiredAmount;
 }
 
-export function applyPrestige(
-  config: GameConfig,
-  state: GameState
-): GameState {
+export function applyPrestige(config: GameConfig, state: GameState): GameState {
   const { prestige } = config;
   const earned = state.resources[prestige.requiredResource] ?? 0;
-  const currency = Math.floor(
-    Math.pow(earned / prestige.requiredAmount, prestige.formulaExponent) * 10
+  const currency = floor(
+    multiply(pow(earned / prestige.requiredAmount, prestige.formulaExponent), 10)
   );
 
   const persistedUpgradeIds = new Set(prestige.persistedUpgrades ?? []);
@@ -211,8 +227,10 @@ export function applyPrestige(
     resources: freshResources,
     buildings: {},
     upgrades: newUpgrades,
+    achievements: state.achievements,
+    tapCount: state.tapCount ?? 0,
     prestige: {
-      currency: state.prestige.currency + currency,
+      currency: add(state.prestige.currency, currency),
       totalPrestiges: state.prestige.totalPrestiges + 1,
       lifetimeEarnings: state.prestige.lifetimeEarnings,
     },
@@ -222,7 +240,7 @@ export function applyPrestige(
   };
 }
 
-// ── Default state factory ───────────────────
+// ── Default state ───────────────────────────
 export function createDefaultState(config: GameConfig): GameState {
   const resources: ResourceState = {};
   for (const r of config.resources) {
@@ -232,18 +250,11 @@ export function createDefaultState(config: GameConfig): GameState {
     resources,
     buildings: {},
     upgrades: {},
+    achievements: {},
+    tapCount: 0,
     prestige: { currency: 0, totalPrestiges: 0, lifetimeEarnings: {} },
     lastSaveAt: Date.now(),
     lastTickAt: Date.now(),
     totalPlaytimeMs: 0,
   };
-}
-
-// ── Number formatter for big numbers ───────
-export function formatNumber(n: number): string {
-  if (n < 1000) return n.toFixed(1);
-  const suffixes = ['', 'K', 'M', 'B', 'T', 'Qa', 'Qi', 'Sx'];
-  const i = Math.floor(Math.log10(n) / 3);
-  const scaled = n / Math.pow(1000, i);
-  return scaled.toFixed(2) + (suffixes[i] ?? 'e' + i * 3);
 }
