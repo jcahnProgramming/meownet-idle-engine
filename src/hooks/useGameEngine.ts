@@ -4,7 +4,7 @@
 
 import { useEffect, useRef, useCallback, useReducer, useState } from 'react';
 import { AppState, AppStateStatus } from 'react-native';
-import { GameConfig, GameState } from '../types/engine';
+import { GameConfig, GameState, ResourceState } from '../types/engine';
 import {
   tick,
   applyOfflineEarnings,
@@ -18,6 +18,11 @@ import {
   getBuildingCost,
 } from '../engine/gameLoop';
 import { saveLocal, loadLocal, syncToCloud } from '../engine/saveManager';
+
+export interface OfflineEarnings {
+  offlineMs: number;
+  earned: Record<string, number>;
+}
 
 type Action =
   | { type: 'SET_STATE'; state: GameState }
@@ -41,6 +46,15 @@ function reducer(config: GameConfig) {
   };
 }
 
+function diffResources(before: ResourceState, after: ResourceState): Record<string, number> {
+  const diff: Record<string, number> = {};
+  for (const key of Object.keys(after)) {
+    const delta = (after[key] ?? 0) - (before[key] ?? 0);
+    if (delta > 0) diff[key] = delta;
+  }
+  return diff;
+}
+
 interface UseGameEngineOptions {
   config: GameConfig;
   userId?: string;
@@ -53,6 +67,8 @@ export function useGameEngine({
   autoSaveIntervalMs = 10_000,
 }: UseGameEngineOptions) {
   const [loaded, setLoaded] = useState(false);
+  const [pendingOfflineEarnings, setPendingOfflineEarnings] = useState<OfflineEarnings | null>(null);
+
   const [state, dispatch] = useReducer(
     reducer(config),
     createDefaultState(config)
@@ -65,8 +81,16 @@ export function useGameEngine({
   useEffect(() => {
     loadLocal(config).then(saved => {
       if (saved) {
-        const { newState } = applyOfflineEarnings(config, saved);
+        const before = saved.resources;
+        const { newState, offlineMs } = applyOfflineEarnings(config, saved);
+        const earned = diffResources(before, newState.resources);
+
         dispatch({ type: 'SET_STATE', state: newState });
+
+        // Only show modal if away > 1 min and earned something meaningful
+        if (offlineMs > 60_000 && Object.keys(earned).length > 0) {
+          setPendingOfflineEarnings({ offlineMs, earned });
+        }
       }
       setLoaded(true);
     });
@@ -103,8 +127,13 @@ export function useGameEngine({
       if (status === 'active') {
         loadLocal(config).then(saved => {
           if (saved) {
-            const { newState } = applyOfflineEarnings(config, saved);
+            const before = saved.resources;
+            const { newState, offlineMs } = applyOfflineEarnings(config, saved);
+            const earned = diffResources(before, newState.resources);
             dispatch({ type: 'SET_STATE', state: newState });
+            if (offlineMs > 60_000 && Object.keys(earned).length > 0) {
+              setPendingOfflineEarnings({ offlineMs, earned });
+            }
           }
         });
       }
@@ -120,6 +149,7 @@ export function useGameEngine({
     (id: string) => dispatch({ type: 'BUY_UPGRADE', upgradeId: id }), []
   );
   const prestige = useCallback(() => dispatch({ type: 'PRESTIGE' }), []);
+  const dismissOfflineEarnings = useCallback(() => setPendingOfflineEarnings(null), []);
 
   const productionRates = calculateProductionRates(config, state);
   const getBuildingCostMemo = useCallback(
@@ -134,6 +164,8 @@ export function useGameEngine({
     productionRates,
     getBuildingCost: getBuildingCostMemo,
     prestigeAvailable,
+    pendingOfflineEarnings,
+    dismissOfflineEarnings,
     tap,
     purchaseBuilding,
     purchaseUpgrade,

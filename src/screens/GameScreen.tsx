@@ -4,7 +4,7 @@
 //  labels, icons, colors, and layout decisions
 // ─────────────────────────────────────────────
 
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -19,6 +19,7 @@ import { BuildingCard } from '../components/buildings/BuildingCard';
 import { UpgradeCard } from '../components/shop/UpgradeCard';
 import { HUD } from '../components/hud/HUD';
 import { TapTarget } from '../components/hud/TapTarget';
+import { OfflineEarningsModal } from '../components/hud/OfflineEarningsModal';
 
 const theme = gameConfig.theme;
 
@@ -30,6 +31,8 @@ export default function GameScreen({ userId }: Props) {
     productionRates,
     getBuildingCost,
     prestigeAvailable,
+    pendingOfflineEarnings,
+    dismissOfflineEarnings,
     tap,
     purchaseBuilding,
     purchaseUpgrade,
@@ -50,6 +53,10 @@ export default function GameScreen({ userId }: Props) {
 
   return (
     <SafeAreaView style={styles.root}>
+      <OfflineEarningsModal
+        earnings={pendingOfflineEarnings}
+        onCollect={dismissOfflineEarnings}
+      />
 
       {/* ── HUD ── */}
       <HUD state={state} productionRates={productionRates} />
