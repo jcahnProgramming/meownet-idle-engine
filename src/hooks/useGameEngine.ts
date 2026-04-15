@@ -110,8 +110,14 @@ export function useGameEngine({
   useEffect(() => {
     loadLocal(config).then(saved => {
       if (saved) {
-        const before = saved.resources;
-        const { newState, offlineMs } = applyOfflineEarnings(config, saved);
+        // Migrate old saves that predate achievements
+        const migrated = {
+          ...saved,
+          achievements: saved.achievements ?? {},
+          tapCount: saved.tapCount ?? 0,
+        };
+        const before = migrated.resources;
+        const { newState, offlineMs } = applyOfflineEarnings(config, migrated);
         const earned = diffResources(before, newState.resources);
         dispatch({ type: 'SET_STATE', state: newState });
         if (offlineMs > 60_000 && Object.keys(earned).length > 0) {
@@ -151,8 +157,13 @@ export function useGameEngine({
       if (status === 'active') {
         loadLocal(config).then(saved => {
           if (saved) {
-            const before = saved.resources;
-            const { newState, offlineMs } = applyOfflineEarnings(config, saved);
+            const migrated = {
+              ...saved,
+              achievements: saved.achievements ?? {},
+              tapCount: saved.tapCount ?? 0,
+            };
+            const before = migrated.resources;
+            const { newState, offlineMs } = applyOfflineEarnings(config, migrated);
             const earned = diffResources(before, newState.resources);
             dispatch({ type: 'SET_STATE', state: newState });
             if (offlineMs > 60_000 && Object.keys(earned).length > 0) {
