@@ -22,6 +22,7 @@ import {
 } from '../engine/gameLoop';
 import { checkAchievements, applyAchievements } from '../engine/achievementEngine';
 import { checkMilestones } from '../engine/milestoneEngine';
+import { updateChallengeProgress, claimChallengeReward, maybeResetChallenges } from '../engine/dailyChallengeEngine';
 import { MilestoneEvent } from '../components/hud/MilestoneToast';
 import { saveLocal, loadLocal, syncToCloud } from '../engine/saveManager';
 import { achievements as defaultAchievements } from '../config/gameConfig';
@@ -39,6 +40,7 @@ type Action =
   | { type: 'BUY_BUILDING_BULK'; buildingId: string; count: number | 'max' }
   | { type: 'BUY_UPGRADE'; upgradeId: string }
   | { type: 'BUY_PRESTIGE_UPGRADE'; upgradeId: string }
+  | { type: 'CLAIM_CHALLENGE'; challengeId: string }
   | { type: 'PRESTIGE' };
 
 function reducer(config: GameConfig, achievements: AchievementDef[]) {
@@ -47,12 +49,40 @@ function reducer(config: GameConfig, achievements: AchievementDef[]) {
     switch (action.type) {
       case 'SET_STATE': return action.state;
       case 'TICK': next = tick(config, state, action.deltaMs); break;
-      case 'TAP': next = { ...handleTap(config, state), tapCount: (state.tapCount ?? 0) + 1 }; break;
-      case 'BUY_BUILDING': next = buyBuilding(config, state, action.buildingId) ?? state; break;
-      case 'BUY_BUILDING_BULK': next = buyBuildingBulk(config, state, action.buildingId, action.count) ?? state; break;
-      case 'BUY_UPGRADE': next = buyUpgrade(config, state, action.upgradeId) ?? state; break;
+      case 'TAP': {
+        const tapped = { ...handleTap(config, state), tapCount: (state.tapCount ?? 0) + 1 };
+        const cs = updateChallengeProgress(config, tapped, state, 'tap');
+        next = { ...tapped, dailyChallenges: cs };
+        break;
+      }
+      case 'BUY_BUILDING': {
+        const bought = buyBuilding(config, state, action.buildingId) ?? state;
+        const cs = updateChallengeProgress(config, bought, state, 'building_purchased', { amount: 1 });
+        next = { ...bought, dailyChallenges: cs };
+        break;
+      }
+      case 'BUY_BUILDING_BULK': {
+        const bought = buyBuildingBulk(config, state, action.buildingId, action.count) ?? state;
+        const prevCount = state.buildings[action.buildingId] ?? 0;
+        const newCount = bought.buildings[action.buildingId] ?? 0;
+        const cs = updateChallengeProgress(config, bought, state, 'building_purchased', { amount: newCount - prevCount });
+        next = { ...bought, dailyChallenges: cs };
+        break;
+      }
+      case 'BUY_UPGRADE': {
+        const upgraded = buyUpgrade(config, state, action.upgradeId) ?? state;
+        const cs = updateChallengeProgress(config, upgraded, state, 'upgrade_purchased');
+        next = { ...upgraded, dailyChallenges: cs };
+        break;
+      }
       case 'BUY_PRESTIGE_UPGRADE': next = buyPrestigeUpgrade(config, state, action.upgradeId) ?? state; break;
-      case 'PRESTIGE': next = canPrestige(config, state) ? applyPrestige(config, state) : state; break;
+      case 'CLAIM_CHALLENGE': next = claimChallengeReward(config, state, action.challengeId) ?? state; break;
+      case 'PRESTIGE': {
+        const prestiged = canPrestige(config, state) ? applyPrestige(config, state) : state;
+        const cs = updateChallengeProgress(config, prestiged, state, 'prestige');
+        next = { ...prestiged, dailyChallenges: cs };
+        break;
+      }
       default: return state;
     }
     // Check achievements after every state change
@@ -134,6 +164,10 @@ export function useGameEngine({
           ...saved,
           achievements: saved.achievements ?? {},
           prestigeShop: saved.prestigeShop ?? {},
+          dailyChallenges: saved.dailyChallenges ?? {
+            date: new Date().toISOString().slice(0, 10),
+            progress: {}, completed: {}, activeBoosts: [],
+          },
           tapCount: saved.tapCount ?? 0,
         };
         const before = migrated.resources;
@@ -181,6 +215,10 @@ export function useGameEngine({
               ...saved,
               achievements: saved.achievements ?? {},
               prestigeShop: saved.prestigeShop ?? {},
+              dailyChallenges: saved.dailyChallenges ?? {
+                date: new Date().toISOString().slice(0, 10),
+                progress: {}, completed: {}, activeBoosts: [],
+              },
               tapCount: saved.tapCount ?? 0,
             };
             const before = migrated.resources;
@@ -209,6 +247,9 @@ export function useGameEngine({
   );
   const purchasePrestigeUpgrade = useCallback(
     (id: string) => dispatch({ type: 'BUY_PRESTIGE_UPGRADE', upgradeId: id }), []
+  );
+  const claimChallenge = useCallback(
+    (id: string) => dispatch({ type: 'CLAIM_CHALLENGE', challengeId: id }), []
   );
   const prestige = useCallback(() => dispatch({ type: 'PRESTIGE' }), []);
   const dismissMilestone = useCallback(() => {
@@ -259,6 +300,7 @@ export function useGameEngine({
     purchaseBuildingBulk,
     purchaseUpgrade,
     purchasePrestigeUpgrade,
+    claimChallenge,
     prestige,
   };
 }

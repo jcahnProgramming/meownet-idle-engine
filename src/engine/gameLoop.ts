@@ -40,6 +40,13 @@ export function calculateProductionRates(
     const prestigeMults = getPrestigeMultipliers(config, state);
     multiplier = multiply(multiplier, prestigeMults.globalMultiplier);
 
+    // Apply active daily challenge boost
+    const now = Date.now();
+    const boostMult = state.dailyChallenges?.activeBoosts
+      ?.filter((b: any) => b.expiresAt > now)
+      ?.reduce((acc: number, b: any) => acc * b.multiplier, 1) ?? 1;
+    multiplier = multiply(multiplier, boostMult);
+
     for (const [resourceId, baseRate] of Object.entries(building.baseProduction)) {
       const contribution = multiply(multiply(baseRate, count), multiplier);
       rates[resourceId] = add(rates[resourceId] ?? 0, contribution);
@@ -239,6 +246,7 @@ export function applyPrestige(config: GameConfig, state: GameState): GameState {
     upgrades: newUpgrades,
     achievements: state.achievements,
     prestigeShop: state.prestigeShop,
+    dailyChallenges: state.dailyChallenges,
     tapCount: state.tapCount ?? 0,
     prestige: {
       currency: add(state.prestige.currency, currency),
@@ -263,6 +271,12 @@ export function createDefaultState(config: GameConfig): GameState {
     upgrades: {},
     achievements: {},
     prestigeShop: {},
+    dailyChallenges: {
+      date: new Date().toISOString().slice(0, 10),
+      progress: {},
+      completed: {},
+      activeBoosts: [],
+    },
     tapCount: 0,
     prestige: { currency: 0, totalPrestiges: 0, lifetimeEarnings: {} },
     lastSaveAt: Date.now(),

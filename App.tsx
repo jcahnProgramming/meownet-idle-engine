@@ -11,10 +11,13 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useAuth } from './src/hooks/useAuth';
 import { useGameEngine } from './src/hooks/useGameEngine';
 import { useSoundEngine } from './src/hooks/useSoundEngine';
+import { useAnalytics } from './src/hooks/useAnalytics';
+import { useNotifications } from './src/hooks/useNotifications';
 import AuthScreen from './src/screens/AuthScreen';
 import GameScreen from './src/screens/GameScreen';
 import LeaderboardScreen from './src/screens/LeaderboardScreen';
 import PrestigeShopScreen from './src/screens/PrestigeShopScreen';
+import DailyChallengesScreen from './src/screens/DailyChallengesScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 import { gameConfig as defaultGameConfig } from './src/config/gameConfig';
 import { GameConfig } from './src/types/engine';
@@ -30,14 +33,20 @@ function MainTabs({ userId, config }: { userId?: string; config: GameConfig }) {
   const theme = config.theme;
   const engine = useGameEngine({ config, userId });
   const sound = useSoundEngine(config);
+  const { track } = useAnalytics({ config, userId, state: engine.state });
+  useNotifications({ config, state: engine.state });
+  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
 
-  // Wire sound to engine events
+  // Wire sound + analytics to engine events
   useEffect(() => {
     if (engine.pendingAchievement) sound.play('achievement');
   }, [engine.pendingAchievement?.id]);
 
   useEffect(() => {
-    if (engine.pendingMilestone) sound.play('milestone');
+    if (engine.pendingMilestone) {
+      sound.play('milestone');
+      track('milestone_reached', { milestone_id: engine.pendingMilestone.id });
+    }
   }, [engine.pendingMilestone?.id]);
 
   return (
@@ -80,6 +89,22 @@ function MainTabs({ userId, config }: { userId?: string; config: GameConfig }) {
       </Tab.Screen>
 
       <Tab.Screen
+        name="Daily"
+        options={{ tabBarIcon: ({ focused }) => <TabIcon icon="📅" focused={focused} /> }}
+      >
+        {() => (
+          <DailyChallengesScreen
+            config={config}
+            state={engine.state}
+            onClaim={(id) => {
+              engine.claimChallenge(id);
+              sound.play('achievement');
+            }}
+          />
+        )}
+      </Tab.Screen>
+
+      <Tab.Screen
         name="Leaderboard"
         options={{ tabBarIcon: ({ focused }) => <TabIcon icon="🏆" focused={focused} /> }}
       >
@@ -96,6 +121,8 @@ function MainTabs({ userId, config }: { userId?: string; config: GameConfig }) {
             state={engine.state}
             muted={sound.muted}
             onToggleMute={sound.toggleMute}
+            notificationsEnabled={notificationsEnabled}
+            onToggleNotifications={() => setNotificationsEnabled(n => !n)}
             onReset={() => {}}
           />
         )}

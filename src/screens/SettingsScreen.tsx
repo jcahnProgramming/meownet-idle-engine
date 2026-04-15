@@ -23,10 +23,12 @@ interface Props {
   state: GameState;
   muted?: boolean;
   onToggleMute?: () => void;
+  notificationsEnabled?: boolean;
+  onToggleNotifications?: () => void;
   onReset: () => void;
 }
 
-export default function SettingsScreen({ config: configProp, state, muted, onToggleMute, onReset }: Props) {
+export default function SettingsScreen({ config: configProp, state, muted, onToggleMute, notificationsEnabled, onToggleNotifications, onReset }: Props) {
   const gameConfig = configProp ?? defaultConfig;
   const theme = gameConfig.theme;
   const { user, username, signOut } = useAuth();
@@ -82,6 +84,12 @@ export default function SettingsScreen({ config: configProp, state, muted, onTog
             <TouchableOpacity style={styles.row} onPress={onToggleMute}>
               <Text style={styles.rowLabel}>Sound</Text>
               <Text style={styles.rowValue}>{muted ? '🔇 Muted' : '🔊 On'}</Text>
+            </TouchableOpacity>
+          )}
+          {onToggleNotifications && (
+            <TouchableOpacity style={styles.row} onPress={onToggleNotifications}>
+              <Text style={styles.rowLabel}>Notifications</Text>
+              <Text style={styles.rowValue}>{notificationsEnabled ? '🔔 On' : '🔕 Off'}</Text>
             </TouchableOpacity>
           )}
         </View>

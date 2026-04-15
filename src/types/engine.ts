@@ -92,9 +92,11 @@ export interface GameConfig {
   prestige: PrestigeConfig;
   achievements: AchievementDef[];
   prestigeShop: PrestigeUpgradeDef[];
+  dailyChallenges: ChallengeDef[];
   theme: ThemeConfig;
   balance: BalanceConfig;
   sound: SoundConfig;
+  notifications: NotificationConfig;
   remote: RemoteConfig;
 }
 
@@ -124,6 +126,7 @@ export interface GameState {
   prestige: PrestigeState;
   achievements: AchievementState;
   prestigeShop: PrestigeShopState;
+  dailyChallenges: DailyChallengeState;
   tapCount: number;
   lastSaveAt: number;
   lastTickAt: number;
@@ -183,4 +186,52 @@ export interface SoundConfig {
     prestige?: string;
     milestone?: string;
   };
+}
+
+// ─── Notification Config ──────────────────────
+export interface NotificationConfig {
+  enabled: boolean;
+  reEngagementHours: number;    // hours offline before "we miss you" push
+  prestigeReadyAlert: boolean;  // notify when prestige threshold is reached
+  dailyChallengeAlert: boolean; // notify when daily challenge resets
+  messages: {
+    reEngagement: string[];     // random pick from array
+    prestigeReady: string;
+    dailyReset: string;
+  };
+}
+
+// ─── Daily Challenges ─────────────────────────
+export type ChallengeGoalType =
+  | 'tap_count'
+  | 'resource_earned'
+  | 'buildings_purchased'
+  | 'upgrades_purchased'
+  | 'prestige'
+  | 'spend_resource';
+
+export interface ChallengeDef {
+  id: string;
+  title: string;
+  description: string;
+  icon: string;
+  goalType: ChallengeGoalType;
+  goalAmount: number;
+  resourceId?: string;       // for resource_earned / spend_resource
+  reward: {
+    type: 'resource' | 'prestige_currency' | 'multiplier_boost';
+    resourceId?: string;
+    amount: number;
+    durationMs?: number;     // for multiplier_boost
+  };
+}
+
+export interface DailyChallengeState {
+  date: string;              // 'YYYY-MM-DD' — resets daily
+  progress: Record<string, number>;   // challengeId → current progress
+  completed: Record<string, boolean>; // challengeId → claimed?
+  activeBoosts: Array<{
+    multiplier: number;
+    expiresAt: number;       // unix ms
+  }>;
 }

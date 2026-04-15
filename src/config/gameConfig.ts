@@ -123,6 +123,23 @@ export const gameConfig: GameConfig = {
     tapProductionMultiplier: 1,
   },
 
+  // ── Notifications ──────────────────────────
+  notifications: {
+    enabled: true,
+    reEngagementHours: 4,
+    prestigeReadyAlert: true,
+    dailyChallengeAlert: true,
+    messages: {
+      reEngagement: [
+        'Your cats are waiting! 🐱 Come back and bake!',
+        'The café misses you! ☕ Cookies are piling up!',
+        'Your cats have been hard at work! 🍪 Come collect!',
+      ],
+      prestigeReady: '⭐ You\'re ready to Prestige! Reset for big bonuses!',
+      dailyReset: '📅 New daily challenges are available!',
+    },
+  },
+
   // ── Sound ──────────────────────────────────
   sound: {
     enabled: true,
@@ -152,6 +169,9 @@ export const gameConfig: GameConfig = {
 
   // ── Prestige Shop ───────────────────────────
   prestigeShop: [],
+
+  // ── Daily Challenges ────────────────────────
+  dailyChallenges: [],
 };
 
 // Patch: add achievements and tapCount to the config
@@ -261,5 +281,57 @@ export const prestigeShopItems: PrestigeUpgradeDef[] = [
     cost: 2,
     maxLevel: 5,
     effect: { type: 'start_resources', value: 50 },
+  },
+];
+
+import { ChallengeDef } from '../types/engine';
+
+export const dailyChallenges: ChallengeDef[] = [
+  {
+    id: 'daily_tap_200',
+    title: 'Tappy Tuesday',
+    description: 'Tap 200 times today.',
+    icon: '👆',
+    goalType: 'tap_count',
+    goalAmount: 200,
+    reward: { type: 'resource', resourceId: 'cookies', amount: 500 },
+  },
+  {
+    id: 'daily_earn_10k',
+    title: 'Cookie Rush',
+    description: 'Earn 10,000 cookies today.',
+    icon: '🍪',
+    goalType: 'resource_earned',
+    goalAmount: 10000,
+    resourceId: 'cookies',
+    reward: { type: 'prestige_currency', amount: 2 },
+  },
+  {
+    id: 'daily_buy_5_buildings',
+    title: 'Construction Crew',
+    description: 'Purchase 5 buildings today.',
+    icon: '🏗',
+    goalType: 'buildings_purchased',
+    goalAmount: 5,
+    reward: { type: 'multiplier_boost', amount: 2, durationMs: 30 * 60 * 1000 },
+  },
+  {
+    id: 'daily_buy_upgrade',
+    title: 'Power Up',
+    description: 'Purchase 1 upgrade today.',
+    icon: '⚡',
+    goalType: 'upgrades_purchased',
+    goalAmount: 1,
+    reward: { type: 'resource', resourceId: 'cookies', amount: 1000 },
+  },
+  {
+    id: 'daily_spend_5k',
+    title: 'Big Spender',
+    description: 'Spend 5,000 cookies today.',
+    icon: '💸',
+    goalType: 'spend_resource',
+    goalAmount: 5000,
+    resourceId: 'cookies',
+    reward: { type: 'prestige_currency', amount: 1 },
   },
 ];
