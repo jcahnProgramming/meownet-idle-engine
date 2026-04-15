@@ -97,6 +97,7 @@ export interface GameConfig {
   balance: BalanceConfig;
   sound: SoundConfig;
   notifications: NotificationConfig;
+  locale?: string;           // 'en' | 'es' | 'fr' | 'ja' — default 'en'
   remote: RemoteConfig;
 }
 

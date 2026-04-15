@@ -8,6 +8,7 @@ import { BuildingDef } from '../../types/engine';
 import { gameConfig } from '../../config/gameConfig';
 import { formatNumber } from '../../engine/gameLoop';
 import { BuyMode } from './BuyModeToggle';
+import { BuildingSprite } from './BuildingSprite';
 
 const theme = gameConfig.theme;
 
@@ -30,9 +31,9 @@ export function BuildingCard({ building, count, cost, canAfford, productionPerSe
       disabled={!canAfford}
       activeOpacity={0.75}
     >
-      {/* Icon + count badge */}
+      {/* Animated sprite + count badge */}
       <View style={styles.iconWrap}>
-        <Text style={styles.icon}>{building.icon}</Text>
+        <BuildingSprite icon={building.icon} count={count} size={34} />
         {count > 0 && (
           <View style={[styles.badge, { backgroundColor: theme.primaryColor }]}>
             <Text style={styles.badgeText}>{buyLabel ?? count}</Text>

@@ -8,28 +8,28 @@
 
 /* Begin PBXBuildFile section */
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
-		3A0F74EF66DD7FF2E4D39C9B /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = E055C3EBE7396D6651CF9E45 /* PrivacyInfo.xcprivacy */; };
+		1822A246C640A1B317E2D2E4 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D02169DEA8C856C7DD1C817 /* ExpoModulesProvider.swift */; };
+		3422DA60007B26F4EE76B3D7 /* libPods-meownetidleengine.a in Frameworks */ = {isa = PBXBuildFile; fileRef = DD9583AB3E58DD197280E098 /* libPods-meownetidleengine.a */; };
 		3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */; };
-		4332E5BF27EE1D3D2B6F07FC /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4818AB2F390AF69BE8312106 /* ExpoModulesProvider.swift */; };
-		942A95D34C71182CDBD36FB3 /* libPods-meownetidleengine.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 882C4B6182608ADCF7858ABD /* libPods-meownetidleengine.a */; };
+		8AE14E235294D4BE87C4A30D /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 07202AD3063FA366ECA88940 /* PrivacyInfo.xcprivacy */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		07202AD3063FA366ECA88940 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = meownetidleengine/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		13B07F961A680F5B00A75B9A /* meownetidleengine.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = meownetidleengine.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = meownetidleengine/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = meownetidleengine/Info.plist; sourceTree = "<group>"; };
-		4818AB2F390AF69BE8312106 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-meownetidleengine/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
-		882C4B6182608ADCF7858ABD /* libPods-meownetidleengine.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-meownetidleengine.a"; sourceTree = BUILT_PRODUCTS_DIR; };
-		8B9F178BA1E990CCBA407ED9 /* Pods-meownetidleengine.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-meownetidleengine.debug.xcconfig"; path = "Target Support Files/Pods-meownetidleengine/Pods-meownetidleengine.debug.xcconfig"; sourceTree = "<group>"; };
+		8D02169DEA8C856C7DD1C817 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-meownetidleengine/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
+		8E44F1AC4F22D758DB3C7D3B /* Pods-meownetidleengine.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-meownetidleengine.release.xcconfig"; path = "Target Support Files/Pods-meownetidleengine/Pods-meownetidleengine.release.xcconfig"; sourceTree = "<group>"; };
 		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = meownetidleengine/SplashScreen.storyboard; sourceTree = "<group>"; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
-		E055C3EBE7396D6651CF9E45 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = meownetidleengine/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		DD9583AB3E58DD197280E098 /* libPods-meownetidleengine.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-meownetidleengine.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
+		F0F9FAB989A3695C23F41122 /* Pods-meownetidleengine.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-meownetidleengine.debug.xcconfig"; path = "Target Support Files/Pods-meownetidleengine/Pods-meownetidleengine.debug.xcconfig"; sourceTree = "<group>"; };
 		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = meownetidleengine/AppDelegate.swift; sourceTree = "<group>"; };
 		F11748442D0722820044C1D9 /* meownetidleengine-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "meownetidleengine-Bridging-Header.h"; path = "meownetidleengine/meownetidleengine-Bridging-Header.h"; sourceTree = "<group>"; };
-		FF6241289400EC1A50C829DA /* Pods-meownetidleengine.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-meownetidleengine.release.xcconfig"; path = "Target Support Files/Pods-meownetidleengine/Pods-meownetidleengine.release.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -37,13 +37,21 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				942A95D34C71182CDBD36FB3 /* libPods-meownetidleengine.a in Frameworks */,
+				3422DA60007B26F4EE76B3D7 /* libPods-meownetidleengine.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		0FD9AC2E8EF89520388B2529 /* ExpoModulesProviders */ = {
+			isa = PBXGroup;
+			children = (
+				43E8178136A223DA51DE96D1 /* meownetidleengine */,
+			);
+			name = ExpoModulesProviders;
+			sourceTree = "<group>";
+		};
 		13B07FAE1A68108700A75B9A /* meownetidleengine */ = {
 			isa = PBXGroup;
 			children = (
@@ -53,32 +61,34 @@
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */,
-				E055C3EBE7396D6651CF9E45 /* PrivacyInfo.xcprivacy */,
+				07202AD3063FA366ECA88940 /* PrivacyInfo.xcprivacy */,
 			);
 			name = meownetidleengine;
-			sourceTree = "<group>";
-		};
-		2CBCB47255823C3E2E1B41B0 /* ExpoModulesProviders */ = {
-			isa = PBXGroup;
-			children = (
-				3F769CEC8683DE141B6724BC /* meownetidleengine */,
-			);
-			name = ExpoModulesProviders;
 			sourceTree = "<group>";
 		};
 		2D16E6871FA4F8E400B85C8A /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
-				882C4B6182608ADCF7858ABD /* libPods-meownetidleengine.a */,
+				DD9583AB3E58DD197280E098 /* libPods-meownetidleengine.a */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
-		3F769CEC8683DE141B6724BC /* meownetidleengine */ = {
+		355B3A33030F60EA38DEA71D /* Pods */ = {
 			isa = PBXGroup;
 			children = (
-				4818AB2F390AF69BE8312106 /* ExpoModulesProvider.swift */,
+				F0F9FAB989A3695C23F41122 /* Pods-meownetidleengine.debug.xcconfig */,
+				8E44F1AC4F22D758DB3C7D3B /* Pods-meownetidleengine.release.xcconfig */,
+			);
+			name = Pods;
+			path = Pods;
+			sourceTree = "<group>";
+		};
+		43E8178136A223DA51DE96D1 /* meownetidleengine */ = {
+			isa = PBXGroup;
+			children = (
+				8D02169DEA8C856C7DD1C817 /* ExpoModulesProvider.swift */,
 			);
 			name = meownetidleengine;
 			sourceTree = "<group>";
@@ -97,8 +107,8 @@
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
-				DDA72A03CFA1F309780B24BA /* Pods */,
-				2CBCB47255823C3E2E1B41B0 /* ExpoModulesProviders */,
+				355B3A33030F60EA38DEA71D /* Pods */,
+				0FD9AC2E8EF89520388B2529 /* ExpoModulesProviders */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -122,16 +132,6 @@
 			path = meownetidleengine/Supporting;
 			sourceTree = "<group>";
 		};
-		DDA72A03CFA1F309780B24BA /* Pods */ = {
-			isa = PBXGroup;
-			children = (
-				8B9F178BA1E990CCBA407ED9 /* Pods-meownetidleengine.debug.xcconfig */,
-				FF6241289400EC1A50C829DA /* Pods-meownetidleengine.release.xcconfig */,
-			);
-			name = Pods;
-			path = Pods;
-			sourceTree = "<group>";
-		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -140,13 +140,13 @@
 			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "meownetidleengine" */;
 			buildPhases = (
 				08A4A3CD28434E44B6B9DE2E /* [CP] Check Pods Manifest.lock */,
-				7F89CC36D867FEA8C266A41E /* [Expo] Configure project */,
+				497F099DEB1B1FD00B8F33F1 /* [Expo] Configure project */,
 				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
 				800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */,
-				E7795F5B9AF143FBC56DFEAA /* [CP] Embed Pods Frameworks */,
+				8D965CDFCD70BDD91A765266 /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
@@ -196,7 +196,7 @@
 				BB2F792D24A3F905000567C9 /* Expo.plist in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */,
-				3A0F74EF66DD7FF2E4D39C9B /* PrivacyInfo.xcprivacy in Resources */,
+				8AE14E235294D4BE87C4A30D /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -242,7 +242,7 @@
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
-		7F89CC36D867FEA8C266A41E /* [Expo] Configure project */ = {
+		497F099DEB1B1FD00B8F33F1 /* [Expo] Configure project */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
@@ -274,18 +274,24 @@
 			inputPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-meownetidleengine/Pods-meownetidleengine-resources.sh",
 				"${PODS_CONFIGURATION_BUILD_DIR}/AsyncStorage/AsyncStorage_resources.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/EXApplication/ExpoApplication_privacy.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/EXConstants/EXConstants.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/EXConstants/ExpoConstants_privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/ExpoDevice/ExpoDevice_privacy.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/ExpoFileSystem/ExpoFileSystem_privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/ExpoNotifications/ExpoNotifications_privacy.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/React-Core/React-Core_privacy.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/React-cxxreact/React-cxxreact_privacy.bundle",
 			);
 			name = "[CP] Copy Pods Resources";
 			outputPaths = (
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/AsyncStorage_resources.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoApplication_privacy.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/EXConstants.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoConstants_privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoDevice_privacy.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoFileSystem_privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoNotifications_privacy.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/React-Core_privacy.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/React-cxxreact_privacy.bundle",
 			);
@@ -294,7 +300,7 @@
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-meownetidleengine/Pods-meownetidleengine-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
-		E7795F5B9AF143FBC56DFEAA /* [CP] Embed Pods Frameworks */ = {
+		8D965CDFCD70BDD91A765266 /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -324,7 +330,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */,
-				4332E5BF27EE1D3D2B6F07FC /* ExpoModulesProvider.swift in Sources */,
+				1822A246C640A1B317E2D2E4 /* ExpoModulesProvider.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -333,7 +339,7 @@
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 8B9F178BA1E990CCBA407ED9 /* Pods-meownetidleengine.debug.xcconfig */;
+			baseConfigurationReference = F0F9FAB989A3695C23F41122 /* Pods-meownetidleengine.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
@@ -369,7 +375,7 @@
 		};
 		13B07F951A680F5B00A75B9A /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = FF6241289400EC1A50C829DA /* Pods-meownetidleengine.release.xcconfig */;
+			baseConfigurationReference = 8E44F1AC4F22D758DB3C7D3B /* Pods-meownetidleengine.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;

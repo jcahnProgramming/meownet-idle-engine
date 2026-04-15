@@ -16,12 +16,18 @@ import { useNotifications } from './src/hooks/useNotifications';
 import AuthScreen from './src/screens/AuthScreen';
 import GameScreen from './src/screens/GameScreen';
 import LeaderboardScreen from './src/screens/LeaderboardScreen';
+import FriendsLeaderboardScreen from './src/screens/FriendsLeaderboardScreen';
 import PrestigeShopScreen from './src/screens/PrestigeShopScreen';
 import DailyChallengesScreen from './src/screens/DailyChallengesScreen';
+import GachaScreen from './src/screens/GachaScreen';
+import StatsScreen from './src/screens/StatsScreen';
+import SaveSlotsScreen from './src/screens/SaveSlotsScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 import { gameConfig as defaultGameConfig } from './src/config/gameConfig';
 import { GameConfig } from './src/types/engine';
+import { getActiveSlot, saveToSlot } from './src/engine/saveSlots';
 import { loadRemoteConfig } from './src/engine/remoteConfig';
+import { setLocale } from './src/engine/i18n';
 
 const Tab = createBottomTabNavigator();
 
@@ -36,6 +42,7 @@ function MainTabs({ userId, config }: { userId?: string; config: GameConfig }) {
   const { track } = useAnalytics({ config, userId, state: engine.state });
   useNotifications({ config, state: engine.state });
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const [activeSlot, setActiveSlot2] = useState(0);
 
   // Wire sound + analytics to engine events
   useEffect(() => {
@@ -89,6 +96,23 @@ function MainTabs({ userId, config }: { userId?: string; config: GameConfig }) {
       </Tab.Screen>
 
       <Tab.Screen
+        name="Gacha"
+        options={{ tabBarIcon: ({ focused }) => <TabIcon icon="📦" focused={focused} /> }}
+      >
+        {() => (
+          <GachaScreen
+            config={config}
+            state={engine.state}
+            onRoll={(packId) => {
+              const rewards = engine.rollGacha(packId);
+              if (rewards) sound.play('achievement');
+              return rewards;
+            }}
+          />
+        )}
+      </Tab.Screen>
+
+      <Tab.Screen
         name="Daily"
         options={{ tabBarIcon: ({ focused }) => <TabIcon icon="📅" focused={focused} /> }}
       >
@@ -105,10 +129,41 @@ function MainTabs({ userId, config }: { userId?: string; config: GameConfig }) {
       </Tab.Screen>
 
       <Tab.Screen
-        name="Leaderboard"
+        name="Friends"
+        options={{ tabBarIcon: ({ focused }) => <TabIcon icon="👥" focused={focused} /> }}
+      >
+        {() => <FriendsLeaderboardScreen config={config} userId={userId} />}
+      </Tab.Screen>
+
+      <Tab.Screen
+        name="Global"
         options={{ tabBarIcon: ({ focused }) => <TabIcon icon="🏆" focused={focused} /> }}
       >
         {() => <LeaderboardScreen config={config} />}
+      </Tab.Screen>
+
+      <Tab.Screen
+        name="Saves"
+        options={{ tabBarIcon: ({ focused }) => <TabIcon icon="💾" focused={focused} /> }}
+      >
+        {() => (
+          <SaveSlotsScreen
+            config={config}
+            state={engine.state}
+            activeSlot={activeSlot}
+            onSwitchSlot={(slot, loadedState) => {
+              setActiveSlot2(slot);
+              engine.loadState(loadedState);
+            }}
+          />
+        )}
+      </Tab.Screen>
+
+      <Tab.Screen
+        name="Stats"
+        options={{ tabBarIcon: ({ focused }) => <TabIcon icon="📊" focused={focused} /> }}
+      >
+        {() => <StatsScreen config={config} state={engine.state} />}
       </Tab.Screen>
 
       <Tab.Screen
@@ -139,6 +194,7 @@ export default function App() {
 
   useEffect(() => {
     loadRemoteConfig(defaultGameConfig).then(merged => {
+      setLocale(merged.locale ?? 'en');
       setActiveConfig(merged);
       setConfigLoaded(true);
     });

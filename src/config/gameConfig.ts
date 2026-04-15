@@ -156,6 +156,8 @@ export const gameConfig: GameConfig = {
     },
   },
 
+  locale: 'en',
+
   // ── Remote (Supabase hosted) ────────────────
   // Replace with your hosted Supabase project values from supabase.com
   remote: {

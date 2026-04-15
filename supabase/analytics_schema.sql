@@ -31,3 +31,20 @@ CREATE POLICY "Users can insert own analytics"
 CREATE POLICY "Users can read own analytics"
   ON idle_analytics FOR SELECT
   USING (auth.uid() = user_id);
+
+-- ── Friends system ────────────────────────────
+CREATE TABLE IF NOT EXISTS idle_friends (
+  id          BIGSERIAL PRIMARY KEY,
+  user_id     UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  friend_id   UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  game_slug   TEXT NOT NULL,
+  created_at  TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(user_id, friend_id, game_slug)
+);
+
+ALTER TABLE idle_friends ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users manage own friends"
+  ON idle_friends FOR ALL
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);

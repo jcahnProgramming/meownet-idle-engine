@@ -17,6 +17,8 @@
     "decimal.js": "^10.6.0",
     "expo": "~54.0.33",
     "expo-av": "^16.0.8",
+    "expo-device": "^55.0.15",
+    "expo-notifications": "^55.0.19",
     "expo-status-bar": "~3.0.9",
     "react": "19.1.0",
     "react-native": "0.81.5",

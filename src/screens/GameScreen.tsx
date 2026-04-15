@@ -23,6 +23,7 @@ import { TapTarget } from '../components/hud/TapTarget';
 import { OfflineEarningsModal } from '../components/hud/OfflineEarningsModal';
 import { AchievementToast } from '../components/hud/AchievementToast';
 import { MilestoneToast } from '../components/hud/MilestoneToast';
+import { UndoToast } from '../components/hud/UndoToast';
 import { BuyModeToggle, BuyMode } from '../components/buildings/BuyModeToggle';
 
 import { useSoundEngine } from '../hooks/useSoundEngine';
@@ -57,6 +58,8 @@ export default function GameScreen({ userId, config: configProp, engine: engineP
     dismissAchievement,
     pendingMilestone,
     dismissMilestone,
+    undoEntry,
+    undo,
     tap,
     purchaseBuilding,
     purchaseBuildingBulk,
@@ -90,6 +93,11 @@ export default function GameScreen({ userId, config: configProp, engine: engineP
       <MilestoneToast
         event={pendingMilestone}
         onDismiss={dismissMilestone}
+      />
+      <UndoToast
+        description={undoEntry?.description ?? null}
+        expiresAt={undoEntry?.expiresAt ?? null}
+        onUndo={undo}
       />
 
       {/* ── HUD ── */}

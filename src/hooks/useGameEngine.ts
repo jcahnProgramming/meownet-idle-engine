@@ -23,6 +23,8 @@ import {
 import { checkAchievements, applyAchievements } from '../engine/achievementEngine';
 import { checkMilestones } from '../engine/milestoneEngine';
 import { updateChallengeProgress, claimChallengeReward, maybeResetChallenges } from '../engine/dailyChallengeEngine';
+import { pushUndoSnapshot, consumeUndo, getUndoEntry } from '../engine/undoEngine';
+import { rollGachaPack, GachaReward } from '../engine/gachaEngine';
 import { MilestoneEvent } from '../components/hud/MilestoneToast';
 import { saveLocal, loadLocal, syncToCloud } from '../engine/saveManager';
 import { achievements as defaultAchievements } from '../config/gameConfig';
@@ -41,6 +43,8 @@ type Action =
   | { type: 'BUY_UPGRADE'; upgradeId: string }
   | { type: 'BUY_PRESTIGE_UPGRADE'; upgradeId: string }
   | { type: 'CLAIM_CHALLENGE'; challengeId: string }
+  | { type: 'ROLL_GACHA'; packId: string }
+  | { type: 'UNDO' }
   | { type: 'PRESTIGE' };
 
 function reducer(config: GameConfig, achievements: AchievementDef[]) {
@@ -56,12 +60,15 @@ function reducer(config: GameConfig, achievements: AchievementDef[]) {
         break;
       }
       case 'BUY_BUILDING': {
+        pushUndoSnapshot(state, `${config.buildings.find(b => b.id === action.buildingId)?.name ?? 'Building'} ×1`);
         const bought = buyBuilding(config, state, action.buildingId) ?? state;
         const cs = updateChallengeProgress(config, bought, state, 'building_purchased', { amount: 1 });
         next = { ...bought, dailyChallenges: cs };
         break;
       }
       case 'BUY_BUILDING_BULK': {
+        const bname = config.buildings.find(b => b.id === action.buildingId)?.name ?? 'Building';
+        pushUndoSnapshot(state, `${bname} ×${action.count}`);
         const bought = buyBuildingBulk(config, state, action.buildingId, action.count) ?? state;
         const prevCount = state.buildings[action.buildingId] ?? 0;
         const newCount = bought.buildings[action.buildingId] ?? 0;
@@ -70,13 +77,16 @@ function reducer(config: GameConfig, achievements: AchievementDef[]) {
         break;
       }
       case 'BUY_UPGRADE': {
+        pushUndoSnapshot(state, `${config.upgrades.find(u => u.id === action.upgradeId)?.name ?? 'Upgrade'}`);
         const upgraded = buyUpgrade(config, state, action.upgradeId) ?? state;
         const cs = updateChallengeProgress(config, upgraded, state, 'upgrade_purchased');
         next = { ...upgraded, dailyChallenges: cs };
         break;
       }
+      case 'UNDO': next = consumeUndo() ?? state; break;
       case 'BUY_PRESTIGE_UPGRADE': next = buyPrestigeUpgrade(config, state, action.upgradeId) ?? state; break;
       case 'CLAIM_CHALLENGE': next = claimChallengeReward(config, state, action.challengeId) ?? state; break;
+      case 'ROLL_GACHA': next = rollGachaPack(config, state, action.packId)?.newState ?? state; break;
       case 'PRESTIGE': {
         const prestiged = canPrestige(config, state) ? applyPrestige(config, state) : state;
         const cs = updateChallengeProgress(config, prestiged, state, 'prestige');
@@ -248,6 +258,19 @@ export function useGameEngine({
   const purchasePrestigeUpgrade = useCallback(
     (id: string) => dispatch({ type: 'BUY_PRESTIGE_UPGRADE', upgradeId: id }), []
   );
+  const [undoEntry, setUndoEntry] = useState<{ description: string; expiresAt: number } | null>(null);
+
+  // Poll undo entry availability
+  useEffect(() => {
+    const t = setInterval(() => {
+      const entry = getUndoEntry();
+      setUndoEntry(entry ? { description: entry.description, expiresAt: entry.expiresAt } : null);
+    }, 200);
+    return () => clearInterval(t);
+  }, []);
+  const loadState = useCallback(
+    (s: GameState) => dispatch({ type: 'SET_STATE', state: s }), []
+  );
   const claimChallenge = useCallback(
     (id: string) => dispatch({ type: 'CLAIM_CHALLENGE', challengeId: id }), []
   );
@@ -282,6 +305,14 @@ export function useGameEngine({
     [config, state]
   );
 
+  const undo = useCallback(() => dispatch({ type: 'UNDO' }), []);
+  const rollGacha = useCallback((packId: string): GachaReward[] | null => {
+    const result = rollGachaPack(config, stateRef.current, packId);
+    if (!result) return null;
+    dispatch({ type: 'SET_STATE', state: result.newState });
+    return result.rewards;
+  }, [config]);
+
   return {
     state,
     loaded,
@@ -295,12 +326,16 @@ export function useGameEngine({
     dismissAchievement,
     pendingMilestone,
     dismissMilestone,
+    undoEntry,
+    undo,
+    rollGacha,
     tap,
     purchaseBuilding,
     purchaseBuildingBulk,
     purchaseUpgrade,
     purchasePrestigeUpgrade,
     claimChallenge,
+    loadState,
     prestige,
   };
 }
